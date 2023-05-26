@@ -1,0 +1,33 @@
+# TypeScript-specific ignores
+*.tsbuildinfo
+
+# Node.js ignores
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build output ignores
+dist/
+build/
+lib/
+
+# Documentation ignores
+docs/
+
+# IDE and editor ignores
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+
+# Test and coverage ignores
+coverage/
+.nyc_output/
+
+# Log files
+*.log
+
+# OS-specific ignores
+.DS_Store
+Thumbs.db
