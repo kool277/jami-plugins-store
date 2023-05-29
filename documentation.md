@@ -15,7 +15,7 @@ The endpoint to retrieve the list of plugins needs to support a per-page query p
 ### Code Example
 
 ```http
-GET /plugins/
+GET
 ```
 Successful response:
 
