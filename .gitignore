@@ -31,3 +31,8 @@ coverage/
 # OS-specific ignores
 .DS_Store
 Thumbs.db
+
+# Ignore data
+*.jpl
+api/data/
+data/
