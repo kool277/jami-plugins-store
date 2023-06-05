@@ -33,6 +33,4 @@ coverage/
 Thumbs.db
 
 # Ignore data
-*.jpl
-api/data/
-data/
+*.txt

@@ -42,17 +42,10 @@ pipeline {
                    description: 'The Gerrit refspec to fetch.')
     }
     stages {
-        stage('Lint & test') {
+        stage('test') {
             steps {
                 script {
                     docker.build("jami-plugins-store:${env.BUILD_ID}", "--target test .")
-                }
-            }
-        }
-        stage('Build') {
-            steps {
-                script {
-                    docker.build("jami-plugins-store:${env.BUILD_ID}", "--target build .")
                 }
             }
         }

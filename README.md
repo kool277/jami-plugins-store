@@ -54,7 +54,7 @@ run tests and see code coverage
 
 ### Download a plugin by its id
 
-`$ curl -X GET http://localhost:3000/download/AudioFilter.jpl`
+`$ curl -X GET http://localhost:3000/download/WaterMark.jpl`
 
 # Contributing
 
