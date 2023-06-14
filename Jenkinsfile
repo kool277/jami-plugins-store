@@ -60,6 +60,7 @@ pipeline {
             steps {
                 script {
                     docker.build("jami-plugins-store:${env.BUILD_ID}", "--target test .")
+                    sh "docker run -t --rm jami-plugins-store:${env.BUILD_ID}"
                 }
             }
         }
