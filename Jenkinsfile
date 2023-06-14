@@ -24,7 +24,7 @@ pipeline {
     triggers {
         gerrit customUrl: '',
             gerritProjects: [
-                [branches: [[compareType: 'PLAIN', pattern: 'master']],
+                [branches: [[compareType: 'PLAIN', pattern: 'main']],
                  compareType: 'PLAIN',
                  disableStrictForbiddenFileVerification: false,
                  pattern: 'jami-plugins-store']],
