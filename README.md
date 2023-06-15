@@ -70,6 +70,8 @@ To install Docker please read this manual: https://docs.docker.com/engine/instal
 
 The Docker needs a data directory to store the plugins. You need a /data/ folder in your repo. The API will look for the plugins in this folder. This is a temporary situation until we have a database implemented.
 
+## Run the server in a docker container
+
 Build a docker image:
 
 `docker build -t server-image --target server .`
@@ -82,7 +84,7 @@ Run the docker container:
 
 To stop the container do CTRL + C in the terminal.
 
-To run tests in the docker container
+## To run tests in the docker container
 
 Build the test image:
 
@@ -91,6 +93,16 @@ Build the test image:
 Run the test image:
 
 `docker run test-image`
+
+## To check if the code has been linted correctly in the docker container
+
+Build the lint image:
+
+`docker build -t lint-image --target lint .`
+
+Run the lint image:
+
+`docker run lint-image`
 
 # Linting via pre-commit hook
 

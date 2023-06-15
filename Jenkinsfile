@@ -55,7 +55,14 @@ pipeline {
                         userRemoteConfigs: [[refspec: '${GERRIT_REFSPEC}', url: 'https://${JAMI_GERRIT_URL}/jami-plugins-store']]]
             }
         }
-
+        stage('lint') {
+            steps {
+                script {
+                    docker.build("jami-plugins-store:${env.BUILD_ID}", "--target lint .")
+                    sh "docker run -t --rm jami-plugins-store:${env.BUILD_ID}"
+                }
+            }
+        }
         stage('test') {
             steps {
                 script {
