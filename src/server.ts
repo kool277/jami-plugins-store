@@ -18,13 +18,20 @@
 
 import express, {type Request, type Response, type NextFunction} from 'express';
 import app from './routes';
-
+import cors from 'cors';
 const server = express();
+
+server.use(cors());
 
 // Define error handling middleware
 server.use((error: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Internal server error:', error);
   res.status(500).json({error: 'Internal server error'});
+});
+
+server.use('*', (req: Request, res: Response, next) => {
+  console.log(req.method, req.originalUrl);
+  next();
 });
 
 server.use('/', app);
