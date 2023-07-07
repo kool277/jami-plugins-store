@@ -2,13 +2,13 @@
 
 The idea is to provide the user a quick way to discover and install plugins via the plugin store.
 
-# Prerequisites
+## Prerequisites
 
 + npm
 + Node.js 18.16+
 + Docker
 
-# Installation of Node.js 18.16
+## Installation of Node.js 18.16
 
 how to install Node.js 18.16 with nvm
 
@@ -28,7 +28,7 @@ how to install Node.js 18.16 with nvm
 
 run the server
 
-`$ npm run start`
+`$ npm start`
 
 lint
 
@@ -40,13 +40,21 @@ fix the linting
 
 run tests and see code coverage
 
-`$ npm run test`
+`$ npm test`
 
-# Send API requests
+## Add plugin in development environnement
+
+If you want to retrieve plugins via a local self hosted server or via a docker server image you first need to add plugins.
+
+```bash
+python3 ./build.py --plugin <path-to-plugin> --arch <architecture-target>
+```
+
+## Send API requests
 
 ### Get all plugins
 
-`$ curl -X GET http://localhost:3000/`
+`$ curl -X GET http://localhost:3000/?arch=desktop`
 
 ### Get a plugin's details
 
@@ -56,7 +64,7 @@ run tests and see code coverage
 
 `$ curl -X GET http://localhost:3000/download/WaterMark.jpl`
 
-# Contributing
+## Contributing
 
 We have a set of ESLint rules that define clear syntax rules (/.eslintrc.json). You will need the following tools:
 
@@ -64,18 +72,18 @@ We have a set of ESLint rules that define clear syntax rules (/.eslintrc.json). 
 
 We will not accept patches introducing non-ESLint-compliant code.
 
-# Docker
 
+## Docker
+
+### Installation
 To install Docker please read this manual: https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
 
-The Docker needs a data directory to store the plugins. You need a /data/ folder in your repo. The API will look for the plugins in this folder. This is a temporary situation until we have a database implemented.
-
-## Run the server in a docker container
+> Reminder: To successfully run the docker server image and retrieve plugins your first need to add plugins. To do so, please follow the instructions in the section "Add plugin in development environnement".
+### Run the server in a docker container
 
 Build a docker image:
 
 `docker build -t server-image --target server .`
-
 
 Run the docker container:
 
@@ -84,7 +92,7 @@ Run the docker container:
 
 To stop the container do CTRL + C in the terminal.
 
-## To run tests in the docker container
+### Run tests in the docker container
 
 Build the test image:
 
@@ -94,7 +102,7 @@ Run the test image:
 
 `docker run test-image`
 
-## To check if the code has been linted correctly in the docker container
+### To check if the code has been linted correctly in the docker container
 
 Build the lint image:
 
@@ -103,18 +111,3 @@ Build the lint image:
 Run the lint image:
 
 `docker run lint-image`
-
-# Linting via pre-commit hook
-
-Set up the pre-commit hook:
-
-In the root directory of your Git repository, navigate to the `.git/hooks` folder.
-Create or edit the pre-commit file (with no file extension) in that folder.
-
-If you only want to use our pre-commit hook:
-
-```bash
-cp ./extras/scripts/pre-commit.sh .git/hooks/pre-commit
-chmod +x ./git/hooks/pre-commit
-chmod +x .extras/scripts/pre-commit
-```

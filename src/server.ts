@@ -15,45 +15,86 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+import {Application} from './app';
+import * as http from 'http';
+import {type AddressInfo} from 'net';
+import {Service} from 'typedi';
 
-import express, {type Request, type Response, type NextFunction} from 'express';
-import app from './routes';
-import cors from 'cors';
-const server = express();
+@Service()
+export class Server {
+  private static readonly appPort: string | number | boolean =
+    Server.normalizePort('3000');
 
-server.use(cors());
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  private static readonly baseDix: number = 10;
+  private server: http.Server | undefined;
 
-// Define error handling middleware
-server.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Internal server error:', error);
-  res.status(500).json({error: 'Internal server error'});
-});
+  constructor(private readonly application: Application) {}
 
-server.use('*', (req: Request, res: Response, next) => {
-  console.log(req.method, req.originalUrl);
-  next();
-});
+  private static normalizePort(
+    val: number | string
+  ): number | string | boolean {
+    const port: number =
+      typeof val === 'string' ? parseInt(val, this.baseDix) : val;
+    if (isNaN(port)) {
+      return val;
+    } else if (port >= 0) {
+      return port;
+    } else {
+      return false;
+    }
+  }
 
-server.use('/', app);
+  init(): void {
+    this.application.app.set('port', Server.appPort);
 
-// Start the server
-const port = 3000; // Choose a port number
-const serverInstance = server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+    this.server = http.createServer(this.application.app);
 
-// Handle server shutdown
-const handleServerShutdown = (): void => {
-  console.log('\n\nStopping server...\n\n');
+    this.server.listen(Server.appPort);
+    this.server.on('error', (error: NodeJS.ErrnoException) => {
+      this.onError(error);
+    });
+    this.server.on('listening', () => {
+      this.onListening();
+    });
+  }
 
-  // Close the server
-  serverInstance.close(() => {
-    console.log('Server stopped\n\n');
-    process.exit(0);
-  });
-};
+  private onError(error: NodeJS.ErrnoException): void {
+    if (error.syscall !== 'listen') {
+      throw error;
+    }
+    const bind: string =
+      typeof Server.appPort === 'string'
+        ? 'Pipe ' + Server.appPort
+        : 'Port ' + String(Server.appPort);
+    switch (error.code) {
+      case 'EACCES':
+        // eslint-disable-next-line no-console
+        console.error(`${bind} requires elevated privileges`);
+        process.exit(1);
+      // process exit kills the server, break is useless
+      // eslint-disable-next-line no-fallthrough
+      case 'EADDRINUSE':
+        // eslint-disable-next-line no-console
+        console.error(`${bind} is already in use`);
+        process.exit(1);
+      // eslint-disable-next-line no-fallthrough
+      default:
+        throw error;
+    }
+  }
 
-process.on('SIGINT', handleServerShutdown);
-process.on('SIGTERM', handleServerShutdown);
-
-export default server;
+  /**
+   * Se produit lorsque le serveur se met à écouter sur le port.
+   */
+  private onListening(): void {
+    if (this.server === undefined) {
+      return;
+    }
+    const addr = this.server.address() as AddressInfo;
+    const bind: string =
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
+    console.log(`Listening on ${bind}`);
+  }
+}

@@ -16,17 +16,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-import express, {type Request, type Response, type NextFunction} from 'express';
-import app from './routes';
+import 'reflect-metadata';
+import 'module-alias/register';
+import dotenv from 'dotenv';
+import {Server} from './server';
+import {Container} from 'typedi';
 
-const server = express();
+dotenv.config();
 
-// Define error handling middleware
-server.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Internal server error:', error);
-  res.status(500).json({error: 'Internal server error'});
-});
-
-server.use('/', app);
-
-export default server;
+const server: Server = Container.get(Server);
+server.init();

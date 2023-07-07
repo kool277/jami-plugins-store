@@ -21,6 +21,7 @@
       "plugins": ["@typescript-eslint"],
       "rules": {
         // Add any specific TypeScript rules here, or modify existing ones
+        "@typescript-eslint/no-floating-promises": "off"
       }
     }
   ]

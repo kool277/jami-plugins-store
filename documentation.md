@@ -1,130 +1,129 @@
-# API DESIGN ⚙️
+# API documentation
 
-Side note: For now, the id is the same as the name of the plugin.
+## Prerequisites
 
-## Get plugins
++ npm
++ Node.js 18.16+
++ Docker
 
-| **HTTP request** | **Description** |
-|--------------|-------------|
-| GET | Retrieves the list of plugins |
-| GET `/?limit=x` | Retrieves up to x plugins |
+## Installation of Node.js 18.16
 
-The endpoint to retrieve the list of plugins needs to support a per-page query parameter. You can refer to the [documentation on using pagination in the REST API](https://docs.github.com/en/rest/guides/using-pagination-in-the-rest-api?apiVersion=2022-11-28#changing-the-number-of-items-per-page) for more information.
+how to install Node.js 18.16 with nvm
 
-
-### Code Example
-
-```http
-GET
-```
-Successful response:
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-[
-  {
-    "id": "GreenScreen",
-    "name": "Gr`http``een Screen",
-    "description": "This plugin hides your background during a call. Your background can be blurred or changed with another image.",
-    "version": "2.0.0",
-    "iconPath": "https://jami.net/plugins/download?id=GreenScreen/icon.svg"
-  }
-]
+```bash
+$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 ```
 
-Unsuccessful response:
-
-```http
-HTTP/1.1 500 Internal Server Error
-Content-Type: application/json
-
-{
-  "error": "Unable to retrieve list of plugins"
-}
+```bash
+$ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 ```
 
-## Get plugin's details by id
-
-endpoint: `/details/<id>`
-
-
-| **HTTP request** | **Description** |
-|--------------|-------------|
-| GET /details/<id> | Download a plugin by its id |
-
-### Code example
-
-```http
-GET /details/GreenScreen
+```bash
+$ export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"\n[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 ```
 
-Successful response:
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "id": "GreenScreen",
-  "name": "Green Screen",
-  "description": "This plugin hides your background during a call. Your background can be blurred or changed with another image.",
-  "version": "2.0.0",
-  "iconPath": "https://jami.net/plugins/download?id=GreenScreen/icon.svg"
-}
+```bash
+$ command -v nvm
 ```
 
-Unsuccessful response:
+how to install Node.js 18.16 with nvm
 
-```http
-HTTP/1.1 404 Not Found
-Content-Type: application/json
-
-{
-  "error": "Plugin not found"
-}
+```bash
+$ nvm install 18.16.0
 ```
 
-## Download plugin by id
+## Contributing
 
-endpoint: `/download/<id>`
+We have a set of ESLint rules that define clear syntax rules (/.eslintrc.json). You will need the following tools:
 
+* ESLint (https://eslint.org/)
 
-| **HTTP request** | **Description** |
-|--------------|-------------|
-| GET `/download/<id>.jpl` | Download a plugin by its id |
+We will not accept patches introducing non-ESLint-compliant code.
 
-Reference: *addons.mozilla.org/firefox/downloads/file/4103048/ublock_origin-1.49.2.xpi*
+## Docker
 
+To install Docker please read this manual: https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
 
-### Code Example
+The Docker needs a data directory to store the plugins. You need a /data/ folder in your repo. The API will look for the plugins in this folder. This is a temporary situation until we have a database implemented.
 
-```http
-GET /download/GreenScreen.jpl
-```
-Successful response:
+### Run the server in a docker container
 
-```http
-HTTP/1.1 200 OK
-Date: Fri, 12 May 2023 16:02:09 GMT
-Last-Modified: Thu, 04 Aug 2022 17:40:16 GMT
-Content-Length: 147802469
+Build a docker image:
+```bash
+docker build -t server-image --target server .
 ```
 
-Unsuccessful response:
+Run the docker container:
 
-```http
-HTTP/1.1 404 Not Found
-Content-Type: application/json
-
-{
-  "error": "Plugin not found"
-}
+```bash
+docker run -p 3000:3000 -ti server-image
 ```
 
-Possible reasons why the request failed:
+To stop the container do CTRL + C in the terminal.
 
-+ The plugin doesn't exist or has been removed.
-+ The user doesn't have permission to download the plugin.
-+ The server is experiencing issues.
+### To run tests in the docker container
+
+Build the test image:
+
+```bash
+docker build -t test-image --target test .
+```
+
+Run the test image:
+```bash
+docker run test-image
+```
+
+### To check if the code has been linted correctly in the docker container
+
+Build the lint image:
+```bash
+docker build -t lint-image --target lint .
+```
+
+Run the lint image:
+```bash
+docker run lint-image
+```
+
+## GET methods
+
+### endpoint: `/?arch={arch}`
+
+example:
+```bash
+curl -X GET http://localhost:3000/?arch=desktop
+```
+
+### endpoint: `/details/{id}?arch={arch}`
+
+example:
+```bash
+curl -X GET http://localhost:3000/details/AudioFilter?arch=desktop
+```
+
+### endpoint: `/download/{arch}/{id}`
+
+example:
+```bash
+curl -X GET http://localhost:3000/download/android/AudioFilter
+```
+
+### endpoint: `/icons/{id}?arch={arch}`
+
+example:
+```bash
+curl -X GET http://localhost:3000/icons/AudioFilter?arch=android
+```
+
+### endpoint: `/versions/{id}?arch={arch}`
+example:
+```bash
+curl -X GET http://localhost:3000/versions/AudioFilter?arch=android
+```
+
+## Add plugin in development environnement
+
+```bash
+python3 ./build.py --plugin <path-to-plugin> --arch <architecture-target>
+```
