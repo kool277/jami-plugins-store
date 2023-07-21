@@ -30,27 +30,52 @@ export class PluginsController {
     this.configureRouter();
   }
 
-  /**
-   * @swagger
-   *
-   * /plugins:arch:
-   *   get:
-   *     description: Returns the plugins for a given architecture
-   *     tags:
-   *       - Example
-   *       - Time
-   *     produces:
-   *       - application/json
-   *     responses:
-   *       200:
-   *         schema:
-   *           $ref: '#/definitions/Message'
-   */
   private configureRouter(): void {
-    // GET /plugins
     if (this.router === undefined) {
       this.router = Router();
     }
+    /**
+     * @swagger
+     * tags:
+     *   name: Example
+     *   description: Example API endpoints
+     *   externalDocs:
+     *     description: Find out more about Example
+     *     url: http://example.com
+     *
+     * /plugins:
+     *   get:
+     *     summary: Get plugins for a given architecture
+     *     description: Returns the plugins for a given architecture.
+     *     tags: [Example, Time]
+     *     parameters:
+     *       - name: arch
+     *         in: query
+     *         description: The architecture for which plugins are requested.
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       '200':
+     *         description: Successful response with the plugins data.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 type: object
+     *                 properties:
+     *                   name:
+     *                     type: string
+     *                   version:
+     *                     type: string
+     *                   author:
+     *                     type: string
+     *       '400':
+     *         description: Bad request - When the 'arch' parameter is missing.
+     *       '500':
+     *         description: Internal server error - Something went wrong on the server.
+     */
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.router.get('/', async (req: Request, res: Response) => {
       try {
@@ -66,6 +91,48 @@ export class PluginsController {
       }
     });
 
+    /**
+     * @swagger
+     *
+     * /details/:id:
+     *   get:
+     *     summary: Get details of a plugin for a given ID and architecture
+     *     description: Returns details of a plugin for a given ID and architecture.
+     *     tags: [Example, Time]
+     *     parameters:
+     *       - name: id
+     *         in: path
+     *         description: The ID of the plugin.
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - name: arch
+     *         in: query
+     *         description: The architecture for which the plugin details are requested.
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       '200':
+     *         description: Successful response with the plugin details.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 name:
+     *                   type: string
+     *                 version:
+     *                   type: string
+     *                 author:
+     *                   type: string
+     *       '400':
+     *         description: Bad request - When the 'id' or 'arch' parameter is missing.
+     *       '404':
+     *         description: Not found - When the plugin with the specified ID is not found.
+     *       '500':
+     *         description: Internal server error - Something went wrong on the server.
+     */
     // GET /details/:id?arch=:arch
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.router.get('/details/:id', async (req: Request, res: Response) => {
@@ -87,6 +154,44 @@ export class PluginsController {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
       }
     });
+
+    /**
+     * @swagger
+     *
+     * /download/{arch}/{id}:
+     *   get:
+     *     summary: Download a plugin file for a given ID and architecture
+     *     description: Download a plugin file for a given ID and architecture.
+     *     tags: [Example, Time]
+     *     parameters:
+     *       - name: id
+     *         in: path
+     *         description: The ID of the plugin to be downloaded.
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - name: arch
+     *         in: path
+     *         description: The architecture for which the plugin is requested.
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       '200':
+     *         description: Successful response with the plugin file download.
+     *         content:
+     *           application/octet-stream:
+     *             schema:
+     *               type: string
+     *               format: binary
+     *       '400':
+     *         description: Bad request - When the 'id' or 'arch' parameter is missing.
+     *       '404':
+     *         description: Not found - When the plugin file with the specified ID and architecture is not found.
+     *       '500':
+     *         description: Internal server error - Something went wrong on the server.
+     *
+     */
 
     // GET /download/:arch/:id
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -123,7 +228,44 @@ export class PluginsController {
       }
     );
 
-    // GET /icon/:id?arch=:arch
+    /**
+     * @swagger
+     *
+     * /icons/{id}:
+     *   get:
+     *     summary: Get the icon for a plugin with a given ID and architecture
+     *     description: Returns the icon for a plugin with a given ID and architecture.
+     *     tags: [Example, Time]
+     *     parameters:
+     *       - name: id
+     *         in: path
+     *         description: The ID of the plugin to get the icon for.
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - name: arch
+     *         in: query
+     *         description: The architecture for which the plugin icon is requested.
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       '200':
+     *         description: Successful response with the plugin icon image.
+     *         content:
+     *           image/svg+xml:
+     *             schema:
+     *               type: string
+     *               format: binary
+     *       '400':
+     *         description: Bad request - When the 'id' or 'arch' parameter is missing.
+     *       '404':
+     *         description: Not found - When the plugin icon with the specified ID and architecture is not found.
+     *       '500':
+     *         description: Internal server error - Something went wrong on the server.
+     */
+
+    // GET /icons/:id?arch=:arch
     // eslint-disable-next-line
     this.router.get('/icons/:id', async (req: Request, res: Response) => {
       try {
@@ -145,6 +287,38 @@ export class PluginsController {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
       }
     });
+
+    /**
+     * @swagger
+     *
+     * /versions:
+     *   get:
+     *     summary: Get the versions of a plugin for a given architecture
+     *     description: Returns the versions of a plugin for a given architecture.
+     *     tags: [Example, Time]
+     *     parameters:
+     *       - name: arch
+     *         in: query
+     *         description: The architecture for which plugin versions are requested.
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       '200':
+     *         description: Successful response with the plugin versions.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 type: string
+     *       '400':
+     *         description: Bad request - When the 'arch' parameter is missing.
+     *       '404':
+     *         description: Not found - When no plugin versions are available for the specified architecture.
+     *       '500':
+     *         description: Internal server error - Something went wrong on the server.
+     */
 
     // GET /versions/:id?arch=:arch
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
