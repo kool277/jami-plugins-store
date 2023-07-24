@@ -15,7 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-import {type Stats, promises} from 'fs';
+import {type Stats, promises, watch, type FSWatcher} from 'fs';
 import {Service} from 'typedi';
 import StreamZip from 'node-stream-zip';
 @Service()
@@ -77,5 +77,13 @@ export class FileManagerService {
 
   async getStat(path: string): Promise<Stats> {
     return await promises.stat(path);
+  }
+
+  watchFile(path: string): FSWatcher | undefined {
+    try {
+      return watch(path, {recursive: true});
+    } catch (e) {
+      return undefined;
+    }
   }
 }

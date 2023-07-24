@@ -29,7 +29,19 @@ export class PluginsManager {
   constructor(
     private readonly fileManager: FileManagerService,
     private readonly certificateManager: CertificateManagerService
-  ) {}
+  ) {
+    const watcher = this.fileManager.watchFile(
+      // eslint-disable-next-line
+      __dirname + '/../..' + process.env.DATA_DIRECTORY
+    );
+    if (watcher === undefined) {
+      return;
+    }
+    // eslint-disable-next-line
+    watcher.on('change', async () => {
+      await this.setPlugins();
+    });
+  }
 
   // need eslint disable because of the refactoring
   async getPlugins(arch: string): Promise<Array<Omit<Plugins, 'arches'>>> {
@@ -134,7 +146,6 @@ export class PluginsManager {
     const plugin = this.plugins.find((plugin: Plugins) => {
       return plugin.name === id && plugin.arches.includes(arch);
     });
-    console.log(plugin !== undefined);
     return plugin !== undefined;
   }
 
@@ -223,6 +234,7 @@ export class PluginsManager {
     }
     // eslint-disable-next-line
     dataDirectory = __dirname + '/../..' + dataDirectory;
+    this.plugins = [];
     const pluginsPath = await this.fileManager.listFiles(dataDirectory);
     if (pluginsPath === undefined || pluginsPath.length === 0) {
       return;
