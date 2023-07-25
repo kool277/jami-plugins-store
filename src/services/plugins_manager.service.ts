@@ -25,7 +25,7 @@ import {basename, extname} from 'path';
 @Service()
 export class PluginsManager {
   private plugins: Plugins[] = [];
-
+  private readonly archesResolution = new Map<string, string[]>();
   constructor(
     private readonly fileManager: FileManagerService,
     private readonly certificateManager: CertificateManagerService
@@ -131,7 +131,7 @@ export class PluginsManager {
 
   async getNewPlugin(
     path: string,
-    arches: string[]
+    platforms: string[]
   ): Promise<Plugins | undefined> {
     try {
       const plugin = await this.readManifest(path);
@@ -140,9 +140,11 @@ export class PluginsManager {
         path,
         basename(path, extname(path)) + '.crt'
       );
-      if (issuer === undefined) {
+      const arches = await this.getAllPluginArches(path);
+      if (issuer === undefined || arches === undefined) {
         return;
       }
+      this.addPluginArch(platforms, arches);
       return {
         id: plugin.id,
         name: plugin.name,
@@ -329,5 +331,25 @@ export class PluginsManager {
       .catch(e => {
         return '';
       });
+  }
+
+  private addPluginArch(platforms: string[], arches: string[]): void {
+    for (const platform of platforms) {
+      if (this.archesResolution.has(platform)) {
+        const oldArches = this.archesResolution.get(platform);
+        if (oldArches === undefined) {
+          this.archesResolution.set(platform, arches);
+          continue;
+        }
+        for (const arch of arches) {
+          if (!oldArches.includes(arch)) {
+            oldArches.push(arch);
+          }
+        }
+        this.archesResolution.set(platform, oldArches);
+      } else {
+        this.archesResolution.set(platform, arches);
+      }
+    }
   }
 }
