@@ -23,7 +23,7 @@ import {X509Certificate} from 'crypto';
 export class CertificateManagerService {
   constructor(private readonly fileManager: FileManagerService) {}
 
-  async getIssuer(path: string, file: string): Promise<{CN: string}> {
+  async getIssuer(path: string, file: string): Promise<Record<string, string>> {
     const certificate = await this.readCertificate(path, file);
     return this.parseDN(certificate.issuer);
   }
@@ -39,12 +39,13 @@ export class CertificateManagerService {
       });
   }
 
-  parseDN(dn: string): {CN: string} {
-    // eslint-disable-next-line
-    return dn.split('\n').reduce<any>((acc: any, pair: string, _, { }) => {
-      const [key, value] = pair.split('=');
-      acc[key] = value;
-      return acc;
-    }, {});
+  parseDN(dn: string): Record<string, string> {
+    return dn
+      .split('\n')
+      .reduce((acc: Record<string, string>, pair: string) => {
+        const [key, value] = pair.split('=');
+        acc[key] = value;
+        return acc;
+      }, {});
   }
 }

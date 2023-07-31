@@ -30,6 +30,10 @@ export class PluginsManager {
     private readonly fileManager: FileManagerService,
     private readonly certificateManager: CertificateManagerService
   ) {
+    if (process.env.DATA_DIRECTORY === undefined) {
+      return;
+    }
+
     const watcher = this.fileManager.watchFile(
       // eslint-disable-next-line
       __dirname + '/../..' + process.env.DATA_DIRECTORY
@@ -38,8 +42,10 @@ export class PluginsManager {
       return;
     }
     // eslint-disable-next-line
-    watcher.on('change', async () => {
-      await this.setPlugins();
+    watcher.on('change', () => {
+      this.setPlugins().catch(e => {
+        console.log(e);
+      });
     });
   }
 
@@ -117,7 +123,10 @@ export class PluginsManager {
     );
   }
 
-  async addPlugin(path: string, arches: string[]): Promise<void> {
+  async getNewPlugin(
+    path: string,
+    arches: string[]
+  ): Promise<Plugins | undefined> {
     try {
       const plugin = await this.readManifest(path);
       const timestamp = (await this.fileManager.getStat(path)).mtime.toString();
@@ -128,7 +137,7 @@ export class PluginsManager {
       if (issuer === undefined) {
         return;
       }
-      this.plugins.push({
+      return {
         name: plugin.name,
         version: plugin.version,
         description: plugin.description,
@@ -136,10 +145,12 @@ export class PluginsManager {
         arches,
         timestamp,
         author: issuer.CN,
-      });
+      };
     } catch (e) {
       console.error(e);
     }
+    // eslint-disable-next-line
+    return;
   }
 
   private isPluginAvailable(id: string, arch: string): boolean {
@@ -234,7 +245,7 @@ export class PluginsManager {
     }
     // eslint-disable-next-line
     dataDirectory = __dirname + '/../..' + dataDirectory;
-    this.plugins = [];
+    const plugins = [];
     const pluginsPath = await this.fileManager.listFiles(dataDirectory);
     if (pluginsPath === undefined || pluginsPath.length === 0) {
       return;
@@ -247,7 +258,7 @@ export class PluginsManager {
         return;
       }
       for (const platformPath of platformPaths) {
-        await this.addPlugin(
+        const plugin = await this.getNewPlugin(
           dataDirectory +
             '/' +
             pluginPath +
@@ -258,7 +269,12 @@ export class PluginsManager {
             '.jpl',
           [platformPath]
         );
+        if (plugin === undefined) {
+          continue;
+        }
+        plugins.push(plugin);
       }
     }
+    this.plugins = plugins;
   }
 }

@@ -149,7 +149,7 @@ describe('Plugins manager service tests', function () {
 
         // Get the modification timestamp of the file
 
-        await pluginsManagerService.addPlugin(pluginPath, ['arch1', 'arch2']);
+        const newPlugin = await pluginsManagerService.getNewPlugin(pluginPath, ['arch1', 'arch2']);
 
         const expectedPlugin = {
             name: 'test',
@@ -161,7 +161,7 @@ describe('Plugins manager service tests', function () {
             author: 'author',
         };
 
-        expect(pluginsManagerService['plugins']).toContainEqual(expectedPlugin);
+        expect(newPlugin).toEqual(expectedPlugin);
     });
 
 
@@ -183,7 +183,7 @@ describe('Plugins manager service tests', function () {
 
         // Get the modification timestamp of the file
 
-        await pluginsManagerService.addPlugin(pluginPath, ['test']);
+        await pluginsManagerService.getNewPlugin(pluginPath, ['test']);
         await pluginsManagerService.removePlugin('test');
         const isAvailable = pluginsManagerService['isPluginAvailable']('test', 'test');
         expect(isAvailable).toBeFalsy();
@@ -347,16 +347,16 @@ describe('Plugins manager service tests', function () {
         process.env.DATA_DIRECTORY = dataDirectory;
         fileManager.listFiles.onFirstCall().resolves([pluginsPath]).onSecondCall().resolves([platformPath]);
 
-        // Create a spy for the addPlugin method
-        const addPluginStub = Sinon.stub(pluginsManagerService, 'addPlugin');
+        // Create a spy for the getNewPlugin method
+        const getNewPluginStub = Sinon.stub(pluginsManagerService, 'getNewPlugin');
 
         await pluginsManagerService['setPlugins']();
 
-        // Assert that the addPlugin method was called once
-        expect(addPluginStub.calledOnce).toBeTruthy();
+        // Assert that the getNewPlugin method was called once
+        expect(getNewPluginStub.calledOnce).toBeTruthy();
 
-        // Restore the original addPlugin method
-        addPluginStub.restore();
+        // Restore the original getNewPlugin method
+        getNewPluginStub.restore();
     });
 
 

@@ -194,7 +194,6 @@ export class PluginsController {
      */
 
     // GET /download/:arch/:id
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.router.get(
       '/download/:arch/:id',
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -322,7 +321,7 @@ export class PluginsController {
 
     // GET /versions/:id?arch=:arch
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    this.router.get('/versions/', async (req: Request, res: Response) => {
+    this.router.get('/versions/:id', async (req: Request, res: Response) => {
       try {
         if (req.query.arch === undefined) {
           res.status(StatusCodes.BAD_REQUEST).send();

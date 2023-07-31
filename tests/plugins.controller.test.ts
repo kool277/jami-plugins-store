@@ -211,7 +211,7 @@ describe('Routes', function () {
 
     request(expressApp)
       .get("/versions/?arch=test")
-      .expect(StatusCodes.INTERNAL_SERVER_ERROR)
+      .expect(StatusCodes.NOT_FOUND)
       .then((response) => {
         done();
       });
