@@ -47,6 +47,7 @@ describe('Routes', function () {
   it("should fetch all plugins", (done) => {
     const expectedPlugins = [
       {
+        id: 'test',
         name: 'test',
         version: '',
         description: '',
@@ -88,7 +89,7 @@ describe('Routes', function () {
   });
 
   it("should fetch plugin details", (done) => {
-    const expectedPlugin = { name: 'test', version: '', description: '', icon: '', background: '', author: '', timestamp: '' };
+    const expectedPlugin = { id: 'test', name: 'test', version: '', description: '', icon: '', author: '', timestamp: '', background: '' };
     pluginsManagerServiceStub.getPlugin.resolves(expectedPlugin);
 
     request(expressApp)
@@ -131,7 +132,7 @@ describe('Routes', function () {
 
   it("should download a plugin", (done) => {
     pluginsManagerServiceStub.getPluginPath.resolves('test');
-    const expectedPlugin = { name: 'test', version: '', description: '', icon: '', author: '', timestamp: '', background: '' };
+    const expectedPlugin = { id: 'test', name: 'test', version: '', description: '', icon: '', author: '', timestamp: '', background: ''  };
     pluginsManagerServiceStub.getPlugin.resolves(expectedPlugin);
 
     fs.writeFileSync('test', 'test');

@@ -57,6 +57,7 @@ export class PluginsManager {
     return this.plugins
       .map((plugin: Plugins) => {
         return {
+          id: plugin.id,
           name: plugin.name,
           version: plugin.version,
           description: plugin.description,
@@ -66,11 +67,12 @@ export class PluginsManager {
           author: plugin.author,
         };
       })
-      .filter(plugin => this.isPluginAvailable(plugin.name, arch));
+      .filter(plugin => this.isPluginAvailable(plugin.id, arch));
   }
 
   async getPlugin(id: string): Promise<
     | {
+        id: string;
         name: string;
         version: string;
         description: string;
@@ -84,11 +86,12 @@ export class PluginsManager {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
-    const plugin = this.plugins.find((plugin: Plugins) => plugin.name === id);
+    const plugin = this.plugins.find((plugin: Plugins) => plugin.id === id);
 
     return plugin === undefined
       ? undefined
       : {
+          id: plugin.id,
           name: plugin.name,
           version: plugin.version,
           description: plugin.description,
@@ -103,7 +106,7 @@ export class PluginsManager {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
-    const plugin = this.plugins.find((plugin: Plugins) => plugin.name === id);
+    const plugin = this.plugins.find((plugin: Plugins) => plugin.id === id);
     if (
       plugin === undefined ||
       !this.isPluginAvailable(id, arch) ||
@@ -117,11 +120,11 @@ export class PluginsManager {
       '/../..' +
       process.env.DATA_DIRECTORY +
       '/' +
-      plugin.name +
+      id +
       '/' +
       arch +
       '/' +
-      plugin.name +
+      id +
       '.jpl'
     );
   }
@@ -141,6 +144,7 @@ export class PluginsManager {
         return;
       }
       return {
+        id: plugin.id,
         name: plugin.name,
         version: plugin.version,
         description: plugin.description,
@@ -159,13 +163,13 @@ export class PluginsManager {
 
   private isPluginAvailable(id: string, arch: string): boolean {
     const plugin = this.plugins.find((plugin: Plugins) => {
-      return plugin.name === id && plugin.arches.includes(arch);
+      return plugin.id === id && plugin.arches.includes(arch);
     });
     return plugin !== undefined;
   }
 
   removePlugin(id: string): void {
-    this.plugins = this.plugins.filter((plugin: Plugins) => plugin.name !== id);
+    this.plugins = this.plugins.filter((plugin: Plugins) => plugin.id !== id);
   }
 
   private async readManifest(path: string): Promise<{
@@ -180,7 +184,7 @@ export class PluginsManager {
       await this.fileManager.readArchive(path, 'manifest.json')
     );
     return {
-      id: manifest.name,
+      id: manifest.id === undefined ? manifest.name : manifest.id,
       name: manifest.name,
       version: manifest.version,
       description: manifest.description,
@@ -198,7 +202,7 @@ export class PluginsManager {
     }
     const plugin = this.plugins.find(
       (plugin: Plugins) =>
-        plugin.name === id &&
+        plugin.id === id &&
         plugin.arches.includes(arch as string) &&
         arch !== undefined
     );
@@ -216,11 +220,11 @@ export class PluginsManager {
         '/../..' +
         process.env.DATA_DIRECTORY +
         '/' +
-        id +
+        plugin.id +
         '/' +
         arch +
         '/' +
-        id +
+        plugin.id +
         '.jpl',
       'data/' + plugin.icon
     );
@@ -235,7 +239,7 @@ export class PluginsManager {
       const version = plugin.version;
       if (version !== undefined) {
         versions.push({
-          id: plugin.name,
+          id: plugin.id,
           version,
         });
       }

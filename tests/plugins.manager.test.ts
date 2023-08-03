@@ -42,6 +42,7 @@ describe('Plugins manager service tests', function () {
     it('should return a list of plugins', async () => {
         const fakePlugin = [
             {
+                id: 'test',
                 name: 'test',
                 version: '',
                 description: '',
@@ -54,6 +55,7 @@ describe('Plugins manager service tests', function () {
 
         const expectedPlugin = [
             {
+                id: 'test',
                 name: 'test',
                 version: '',
                 description: '',
@@ -72,6 +74,7 @@ describe('Plugins manager service tests', function () {
     it('should return a plugin', async () => {
         const plugin =
         {
+            id: 'test',
             name: 'test',
             version: '1.0.0',
             description: 'test',
@@ -86,7 +89,7 @@ describe('Plugins manager service tests', function () {
             arches: ["test"],
         }];
 
-        pluginsManagerService['plugins'] = expected;
+    pluginsManagerService['plugins'] = expected;
 
         const actual = await pluginsManagerService.getPlugin("test");
 
@@ -100,6 +103,7 @@ describe('Plugins manager service tests', function () {
 
     it('should return plugin path', async () => {
         const plugin = {
+            id: 'test',
             name: 'test',
             version: '1.0.0',
             description: 'test',
@@ -195,6 +199,7 @@ describe('Plugins manager service tests', function () {
 
     it('should return true if plugin is available', () => {
         const plugin = {
+            id: 'test',
             name: 'test',
             version: '1.0.0',
             description: 'test',
@@ -249,6 +254,7 @@ describe('Plugins manager service tests', function () {
     it('should return the icon content for a valid plugin', async () => {
 
         const plugin = {
+            id: 'test',
             name: 'test',
             version: '1.0.0',
             description: 'test',
@@ -285,6 +291,7 @@ describe('Plugins manager service tests', function () {
     it('should return an array of plugin versions', async () => {
         const plugins = [
             {
+                id: 'plugin1',
                 name: 'plugin1',
                 version: '1.0.0',
                 description: 'Plugin 1',
@@ -295,6 +302,7 @@ describe('Plugins manager service tests', function () {
                 author: 'author1',
             },
             {
+                id: 'plugin2',
                 name: 'plugin2',
                 version: '2.0.0',
                 description: 'Plugin 2',
@@ -305,6 +313,7 @@ describe('Plugins manager service tests', function () {
                 author: 'author2',
             },
             {
+                id: 'plugin3',
                 name: 'plugin3',
                 version: '3.0.0',
                 description: 'Plugin 3',
