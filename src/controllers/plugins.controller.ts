@@ -338,6 +338,56 @@ export class PluginsController {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
       }
     });
+    /**
+     * @swagger
+     *
+     * /backgrounds/{id}:
+     *   get:
+     *     summary: Get the background for a plugin with a given ID and architecture
+     *     description: Returns the background for a plugin with a given ID and architecture.
+     *     tags: [Example, Time]
+     *     parameters:
+     *       - name: arch
+     *         in: query
+     *         description: The architecture the given plugin.
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       '200':
+     *         description: Successful response with the plugin's background.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 type: string
+     *       '400':
+     *          description: Bad request - When the 'arch' parameter is missing.
+     *       '404':
+     *         description: Not found - When no plugin's background is available for the specified plugin.
+     *       '500':
+     *         description: Internal server error - Something went wrong on the server.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    this.router.get('/backgrounds/:id', async (req: Request, res: Response) => {
+      try {
+        if (req.query.arch === undefined) {
+          res.status(StatusCodes.BAD_REQUEST).send();
+          return;
+        }
+        const background = await this.pluginsManager.getPluginBackground(
+          req.params.id,
+          req.query.arch as string
+        );
+        res
+          .status(background === '' ? StatusCodes.NOT_FOUND : StatusCodes.OK)
+          .send(background === '' ? undefined : background);
+        return;
+      } catch (e) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+      }
+    });
   }
 }
 

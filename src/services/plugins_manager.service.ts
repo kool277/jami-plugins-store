@@ -61,6 +61,7 @@ export class PluginsManager {
           version: plugin.version,
           description: plugin.description,
           icon: plugin.icon,
+          background: plugin.background,
           timestamp: plugin.timestamp,
           author: plugin.author,
         };
@@ -73,7 +74,8 @@ export class PluginsManager {
         name: string;
         version: string;
         description: string;
-        icon: string;
+        icon: string | undefined;
+        background: string | undefined;
         author: string;
         timestamp: string;
       }
@@ -91,6 +93,7 @@ export class PluginsManager {
           version: plugin.version,
           description: plugin.description,
           icon: plugin.icon,
+          background: plugin.background,
           author: plugin.author,
           timestamp: plugin.timestamp,
         };
@@ -145,6 +148,7 @@ export class PluginsManager {
         arches,
         timestamp,
         author: issuer.CN,
+        background: plugin.background,
       };
     } catch (e) {
       console.error(e);
@@ -170,6 +174,7 @@ export class PluginsManager {
     version: string;
     description: string;
     icon: string;
+    background: string;
   }> {
     const manifest = JSON.parse(
       await this.fileManager.readArchive(path, 'manifest.json')
@@ -180,6 +185,7 @@ export class PluginsManager {
       version: manifest.version,
       description: manifest.description,
       icon: manifest.iconPath,
+      background: manifest.backgroundPath,
     };
   }
 
@@ -196,7 +202,11 @@ export class PluginsManager {
         plugin.arches.includes(arch as string) &&
         arch !== undefined
     );
-    if (plugin === undefined || process.env.DATA_DIRECTORY === undefined) {
+    if (
+      plugin === undefined ||
+      process.env.DATA_DIRECTORY === undefined ||
+      plugin.icon === undefined
+    ) {
       return '';
     }
 
@@ -276,5 +286,44 @@ export class PluginsManager {
       }
     }
     this.plugins = plugins;
+  }
+
+  async getPluginBackground(id: string, arch: string): Promise<string> {
+    if (this.plugins.length === 0) {
+      await this.setPlugins();
+    }
+    const plugin = this.plugins.find(
+      (plugin: Plugins) =>
+        plugin.name === id && plugin.arches.includes(arch) && arch !== undefined
+    );
+    if (
+      plugin === undefined ||
+      process.env.DATA_DIRECTORY === undefined ||
+      plugin.background === undefined
+    ) {
+      return '';
+    }
+
+    return await this.fileManager
+      .readArchive(
+        // eslint-disable-next-line
+      __dirname +
+          '/../..' +
+          process.env.DATA_DIRECTORY +
+          '/' +
+          plugin.name +
+          '/' +
+          arch +
+          '/' +
+          plugin.name +
+          '.jpl',
+        'data/' + plugin.background
+      )
+      .then(data => {
+        return data;
+      })
+      .catch(e => {
+        return '';
+      });
   }
 }

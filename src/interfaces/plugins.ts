@@ -19,7 +19,8 @@ export interface Plugins {
   name: string;
   version: string;
   description: string;
-  icon: string;
+  icon: string | undefined;
+  background: string | undefined;
   arches: string[];
   timestamp: string;
   author: string;

@@ -48,7 +48,8 @@ describe('Plugins manager service tests', function () {
                 icon: '',
                 arches: ['test'],
                 timestamp: '',
-                author: ''
+                author: '',
+                background: ''
             }];
 
         const expectedPlugin = [
@@ -57,6 +58,7 @@ describe('Plugins manager service tests', function () {
                 version: '',
                 description: '',
                 icon: '',
+                background: '',
                 timestamp: '',
                 author: ''
             }];
@@ -74,6 +76,7 @@ describe('Plugins manager service tests', function () {
             version: '1.0.0',
             description: 'test',
             icon: 'test',
+            background: 'test',
             timestamp: 'test',
             author: 'test',
         }
@@ -101,6 +104,7 @@ describe('Plugins manager service tests', function () {
             version: '1.0.0',
             description: 'test',
             icon: 'test',
+            background: 'test',
             timestamp: 'test',
             author: 'test',
         };
@@ -195,6 +199,7 @@ describe('Plugins manager service tests', function () {
             version: '1.0.0',
             description: 'test',
             icon: 'test',
+            background: 'test',
             timestamp: 'test',
             author: 'test',
         };
@@ -248,6 +253,7 @@ describe('Plugins manager service tests', function () {
             version: '1.0.0',
             description: 'test',
             icon: 'test',
+            background: 'test',
             timestamp: 'test',
             author: 'test',
         };
@@ -283,6 +289,7 @@ describe('Plugins manager service tests', function () {
                 version: '1.0.0',
                 description: 'Plugin 1',
                 icon: 'icon1',
+                background: 'background1',
                 arches: ['x64'],
                 timestamp: 'timestamp1',
                 author: 'author1',
@@ -292,6 +299,7 @@ describe('Plugins manager service tests', function () {
                 version: '2.0.0',
                 description: 'Plugin 2',
                 icon: 'icon2',
+                background: 'background2',
                 arches: ['x86', 'x64'],
                 timestamp: 'timestamp2',
                 author: 'author2',
@@ -301,6 +309,7 @@ describe('Plugins manager service tests', function () {
                 version: '3.0.0',
                 description: 'Plugin 3',
                 icon: 'icon3',
+                background: 'background3',
                 arches: ['x64'],
                 timestamp: 'timestamp3',
                 author: 'author3',
