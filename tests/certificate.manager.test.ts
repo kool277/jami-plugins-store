@@ -21,15 +21,16 @@ import 'module-alias/register';
 import { promises } from 'fs';
 import Sinon, { createStubInstance, restore, stub } from 'sinon';
 import { FileManagerService } from '../src/services/file.manager.service';
-import { CertificateManagerService } from '../src/services/certificate_manager';
+import { CertificateManager } from '../src/services/certificate.manager.service';
 
 describe('Certificate manager service tests', function () {
     let fileManager: Sinon.SinonStubbedInstance<FileManagerService>;
-    let certificateManagerService: CertificateManagerService;
+    let certificateManager: CertificateManager;
 
     beforeEach(() => {
+        process.env.DATA_DIRECTORY = '/path/to/plugins';
         fileManager = createStubInstance(FileManagerService);
-        certificateManagerService = new CertificateManagerService(fileManager);
+        certificateManager = new CertificateManager(fileManager);
     });
 
     afterEach(() => {
@@ -42,10 +43,10 @@ describe('Certificate manager service tests', function () {
         const fakeCertificate = { CN: 'test' };
         const expectedIssuer = { CN: 'test' };
 
-        stub(Object.getPrototypeOf(certificateManagerService), 'readCertificate').resolves(fakeCertificate);
-        stub(certificateManagerService, 'parseDN').returns(expectedIssuer);
+        stub(Object.getPrototypeOf(certificateManager), 'readCertificate').resolves(fakeCertificate);
+        stub(certificateManager, 'parseDN').returns(expectedIssuer);
 
-        const actual = await certificateManagerService.getIssuer(path, file);
+        const actual = await certificateManager.getIssuer(path, file);
 
         expect(actual).toEqual(expectedIssuer);
     });
@@ -58,11 +59,33 @@ describe('Certificate manager service tests', function () {
 
         fileManager.readArchive.resolves(expectedCertificate);
 
-        const actual = await certificateManagerService['readCertificate'](path, file);
+        const actual = await certificateManager['readCertificate'](path, file);
 
         expect(actual.subject).toEqual(expectedSubject);
     });
 
+    it('should return CRL', async () => {
+        const path = '/path/to/certificates';
+        const file = 'ca.crl';
+        const expectedCRL = 'test';
+        fileManager.readFile.resolves(Buffer.from(expectedCRL, 'utf-8'));
+        const crl = await certificateManager['readCRL'](path + '/' + file);
+        expect(crl).toEqual(expectedCRL);
+    });
+
+    it('should return sfl crl', async () => {
+        const expectedCRL = 'test';
+        fileManager.readFile.resolves(Buffer.from(expectedCRL, 'utf-8'));
+        const crl = await certificateManager.getSflCrl();
+        expect(crl).toEqual(expectedCRL);
+    });
+
+    it('should return ca crl', async () => {
+        const expectedCRL = 'test';
+        fileManager.readFile.resolves(Buffer.from(expectedCRL, 'utf-8'));
+        const crl = await certificateManager.getCaCrl();
+        expect(crl).toEqual(expectedCRL);
+    });
     it('should parse the DN correctly', () => {
         const dn = 'CN=John Doe\nO=Acme Corp';
 
@@ -71,7 +94,7 @@ describe('Certificate manager service tests', function () {
             O: 'Acme Corp'
         };
 
-        const actual = certificateManagerService.parseDN(dn);
+        const actual = certificateManager.parseDN(dn);
 
         expect(actual).toEqual(expected);
     });

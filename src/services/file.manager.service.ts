@@ -15,7 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-import {type Stats, promises, watch, type FSWatcher} from 'fs';
+import {type Stats, promises, watch, type FSWatcher, constants} from 'fs';
 import {Service} from 'typedi';
 import StreamZip from 'node-stream-zip';
 @Service()
@@ -26,6 +26,13 @@ export class FileManagerService {
     } catch (e) {
       return Buffer.from('');
     }
+  }
+
+  async isFileExist(path: string): Promise<boolean> {
+    return await promises
+      .access(path, constants.F_OK)
+      .then(() => true)
+      .catch(() => false);
   }
 
   async listFiles(path: string): Promise<string[]> {

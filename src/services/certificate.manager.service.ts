@@ -20,12 +20,46 @@ import {FileManagerService} from './file.manager.service';
 import {X509Certificate} from 'crypto';
 
 @Service()
-export class CertificateManagerService {
+export class CertificateManager {
   constructor(private readonly fileManager: FileManagerService) {}
 
   async getIssuer(path: string, file: string): Promise<Record<string, string>> {
     const certificate = await this.readCertificate(path, file);
     return this.parseDN(certificate.issuer);
+  }
+
+  async getCaCrlPath(): Promise<string> {
+    const crlFilePath =
+      (process.env.DATA_DIRECTORY as string) + '/' + 'root.crl';
+    const isCRLFileExist = await this.fileManager.isFileExist(crlFilePath);
+    if (process.env.DATA_DIRECTORY === undefined || !isCRLFileExist) {
+      return '';
+    }
+    return crlFilePath;
+  }
+
+  async getSflCrlPath(): Promise<string> {
+    const crlFilePath =
+      (process.env.DATA_DIRECTORY as string) + '/' + 'SFL.crl';
+    const isCRLFileExist = await this.fileManager.isFileExist(crlFilePath);
+    if (process.env.DATA_DIRECTORY === undefined || !isCRLFileExist) {
+      return '';
+    }
+    return crlFilePath;
+  }
+
+  async getCaCrl(): Promise<string> {
+    if (process.env.DATA_DIRECTORY === undefined) {
+      return '';
+    }
+    return await this.readCRL(process.env.DATA_DIRECTORY + '/' + 'ca.crl');
+  }
+
+  async getSflCrl(): Promise<string> {
+    if (process.env.DATA_DIRECTORY === undefined) {
+      return '';
+    }
+    return await this.readCRL(process.env.DATA_DIRECTORY + '/' + 'sfl.crl');
   }
 
   private async readCertificate(
@@ -37,6 +71,10 @@ export class CertificateManagerService {
       .then((content: Buffer) => {
         return new X509Certificate(content);
       });
+  }
+
+  private async readCRL(file: string): Promise<string> {
+    return (await this.fileManager.readFile(file)).toString();
   }
 
   parseDN(dn: string): Record<string, string> {

@@ -20,7 +20,7 @@ import {Service} from 'typedi';
 import {FileManagerService} from './file.manager.service';
 import {type Plugins} from '../interfaces/plugins';
 import {TranslationService} from './translation.service';
-import {CertificateManagerService} from './certificate_manager';
+import {CertificateManager} from './certificate.manager.service';
 import {ArchitectureManager} from './architecture.manager';
 import {basename, extname} from 'path';
 
@@ -31,7 +31,7 @@ export class PluginsManager {
     private readonly architectureManager: ArchitectureManager,
     private readonly translation: TranslationService,
     private readonly fileManager: FileManagerService,
-    private readonly certificateManager: CertificateManagerService
+    private readonly certificateManager: CertificateManager
   ) {
     if (process.env.DATA_DIRECTORY === undefined) {
       return;

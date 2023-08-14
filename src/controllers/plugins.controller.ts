@@ -25,6 +25,7 @@ import {StatusCodes} from 'http-status-codes';
 import {IconsService} from '../services/icons.service';
 import {BackgroundsService} from '../services/backgrounds.service';
 import {TranslationService} from '../services/translation.service';
+import {CertificateManager} from '../services/certificate.manager.service';
 
 @Service()
 export class PluginsController {
@@ -34,7 +35,8 @@ export class PluginsController {
     private readonly pluginsManager: PluginsManager,
     private readonly translation: TranslationService,
     private readonly iconsManager: IconsService,
-    private readonly backgroundsManager: BackgroundsService
+    private readonly backgroundsManager: BackgroundsService,
+    private readonly certificateManager: CertificateManager
   ) {
     this.configureRouter();
   }
@@ -412,6 +414,56 @@ export class PluginsController {
           return;
         }
         res.status(StatusCodes.NOT_FOUND).send();
+      }
+    });
+    /**
+     * @swagger
+     *
+     * /crl?{org}:
+     *   get:
+     *     summary: Get the crl
+     *     description: Returns the corresponding crl for the query.
+     *     parameters:
+     *       - name: org
+     *         in: query
+     *         description: the query crl.
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       '200':
+     *         description: Successful response the crl.
+     *         content:
+     *           application/json:
+     *             schema:
+     *                 type: string
+     *       '404':
+     *         description: Not found - When the query crl is not found.
+     *       '500':
+     *         description: Internal server error - Something went wrong on the server.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    this.router.get('/crl/:org', async (req: Request, res: Response) => {
+      try {
+        let org = req.params.org;
+        if (org === undefined) {
+          org = 'root';
+        }
+        if (org !== 'root' && org !== 'sfl') {
+          res.status(StatusCodes.BAD_REQUEST).send();
+          return;
+        }
+        const crl =
+          org === 'root'
+            ? await this.certificateManager.getCaCrlPath()
+            : await this.certificateManager.getSflCrlPath();
+        if (crl === '') {
+          res.status(StatusCodes.NOT_FOUND).send();
+          return;
+        }
+        res.status(StatusCodes.OK).download(crl);
+      } catch (e) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
       }
     });
   }

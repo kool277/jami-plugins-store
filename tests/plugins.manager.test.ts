@@ -23,7 +23,7 @@ import { Stats } from 'fs';
 
 import { PluginsManager } from "../src/services/plugins.manager.service";
 import { FileManagerService } from '../src/services/file.manager.service';
-import { CertificateManagerService } from '../src/services/certificate_manager';
+import { CertificateManager} from '../src/services/certificate.manager.service';
 import { ArchitectureManager } from '../src/services/architecture.manager';
 import { TranslationService } from '../src/services/translation.service';
 
@@ -32,11 +32,11 @@ describe('Plugins manager service tests', function () {
     let architectureService: Sinon.SinonStubbedInstance<ArchitectureManager>;
     let transaltionStub: Sinon.SinonStubbedInstance<TranslationService>;
     let fileManager: Sinon.SinonStubbedInstance<FileManagerService>;
-    let certificateManager: Sinon.SinonStubbedInstance<CertificateManagerService>;
+    let certificateManager: Sinon.SinonStubbedInstance<CertificateManager>;
 
     beforeEach(() => {
         fileManager = createStubInstance(FileManagerService);
-        certificateManager = createStubInstance(CertificateManagerService);
+        certificateManager = createStubInstance(CertificateManager);
         architectureService = createStubInstance(ArchitectureManager);
         transaltionStub = createStubInstance(TranslationService);
         pluginsManagerService = new PluginsManager(architectureService, transaltionStub, fileManager, certificateManager);

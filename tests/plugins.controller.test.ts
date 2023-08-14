@@ -29,6 +29,8 @@ import fs from "fs";
 import { TranslationService } from '../src/services/translation.service';
 import { IconsService } from '../src/services/icons.service';
 import { BackgroundsService } from '../src/services/backgrounds.service';
+import { CertificateManager } from '../src/services/certificate.manager.service';
+
 
 describe('Routes', function () {
 
@@ -36,6 +38,7 @@ describe('Routes', function () {
   let transaltionStub: SinonStubbedInstance<TranslationService>;
   let iconsManagerStub: SinonStubbedInstance<IconsService>;
   let backgroundsService: SinonStubbedInstance<BackgroundsService>;
+  let certificateManager: SinonStubbedInstance<CertificateManager>;
   let expressApp: Express.Application;
 
   beforeEach(() => {
@@ -43,12 +46,13 @@ describe('Routes', function () {
     transaltionStub = createStubInstance(TranslationService);
     iconsManagerStub = createStubInstance(IconsService);
     backgroundsService = createStubInstance(BackgroundsService);
-
+    certificateManager = createStubInstance(CertificateManager);
     const app = Container.get(Application);
     Object.defineProperty(app['pluginsController'], 'pluginsManager', { value: pluginsManagerServiceStub });
     Object.defineProperty(app['pluginsController'], 'translation', { value: transaltionStub });
     Object.defineProperty(app['pluginsController'], 'iconsManager', { value: iconsManagerStub });
-    Object.defineProperty(app['pluginsController'], 'backgroundsManager', { value: BackgroundsService });
+    Object.defineProperty(app['pluginsController'], 'backgroundsManager', { value: backgroundsService });
+    Object.defineProperty(app['pluginsController'], 'certificateManager', { value: certificateManager });
     expressApp = app.app;
   });
 
