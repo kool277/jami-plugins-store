@@ -21,12 +21,16 @@ import {type Request, type Response, Router} from 'express';
 import fs from 'fs';
 import {Service} from 'typedi';
 import {StatusCodes} from 'http-status-codes';
+import {LanguageManager} from '../services/language_manager.service';
 
 @Service()
 export class PluginsController {
   router = Router();
 
-  constructor(private readonly pluginsManager: PluginsManager) {
+  constructor(
+    private readonly pluginsManager: PluginsManager,
+    private readonly languageManager: LanguageManager
+  ) {
     this.configureRouter();
   }
 
@@ -79,12 +83,17 @@ export class PluginsController {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.router.get('/', async (req: Request, res: Response) => {
       try {
+        let langs = req.get('Accept-Language');
+        if (langs === undefined) {
+          langs = 'en';
+        }
+        const lang = this.languageManager.getLanguage(langs);
         const arch: string = req.query.arch as string;
         if (arch === undefined) {
           res.status(StatusCodes.BAD_REQUEST).send();
           return;
         }
-        const plugins = await this.pluginsManager.getPlugins(arch);
+        const plugins = await this.pluginsManager.getPlugins(arch, lang);
         res.status(StatusCodes.OK).send(plugins);
       } catch (e) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
@@ -137,13 +146,18 @@ export class PluginsController {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.router.get('/details/:id', async (req: Request, res: Response) => {
       try {
+        let langs = req.get('Accept-Language');
+        if (langs === undefined) {
+          langs = 'en';
+        }
+        const lang = this.languageManager.getLanguage(langs);
         const pluginId: string = req.params.id;
         const arch: string = req.query.arch as string;
         if (pluginId === undefined || arch === undefined) {
           res.status(StatusCodes.BAD_REQUEST).send();
           return;
         }
-        const plugin = await this.pluginsManager.getPlugin(pluginId);
+        const plugin = await this.pluginsManager.getPlugin(pluginId, lang);
         if (plugin === undefined) {
           res.status(StatusCodes.NOT_FOUND).send();
           return;

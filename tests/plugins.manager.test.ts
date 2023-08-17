@@ -67,7 +67,7 @@ describe('Plugins manager service tests', function () {
 
         stub(Object.getPrototypeOf(pluginsManagerService), 'isPluginAvailable').returns(true);
         pluginsManagerService['plugins'] = fakePlugin;
-        const actual = await pluginsManagerService.getPlugins('test');
+        const actual = await pluginsManagerService.getPlugins('test', 'en');
         expect(actual).toEqual(expectedPlugin);
     });
 
@@ -91,13 +91,13 @@ describe('Plugins manager service tests', function () {
 
     pluginsManagerService['plugins'] = expected;
 
-        const actual = await pluginsManagerService.getPlugin("test");
+        const actual = await pluginsManagerService.getPlugin("test", 'en');
 
         expect(actual).toEqual(plugin);
     });
 
     it('should return undefined if plugin not found', async () => {
-        const actual = await pluginsManagerService.getPlugin("test");
+        const actual = await pluginsManagerService.getPlugin("test", 'en');
         expect(actual).toBeUndefined();
     });
 

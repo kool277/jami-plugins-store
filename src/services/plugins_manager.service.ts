@@ -50,27 +50,45 @@ export class PluginsManager {
   }
 
   // need eslint disable because of the refactoring
-  async getPlugins(arch: string): Promise<Array<Omit<Plugins, 'arches'>>> {
+  async getPlugins(
+    arch: string,
+    lang: string
+  ): Promise<Array<Omit<Plugins, 'arches'>>> {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
-    return this.plugins
-      .map((plugin: Plugins) => {
-        return {
-          id: plugin.id,
-          name: plugin.name,
-          version: plugin.version,
-          description: plugin.description,
-          icon: plugin.icon,
-          background: plugin.background,
-          timestamp: plugin.timestamp,
-          author: plugin.author,
-        };
-      })
-      .filter(plugin => this.isPluginAvailable(plugin.id, arch));
+    return await Promise.all(
+      this.plugins
+        .map(async (plugin: Plugins) => {
+          return {
+            id: plugin.id,
+            name: await this.formatText(
+              plugin.id,
+              plugin.arches[0],
+              lang,
+              plugin.name
+            ),
+            version: plugin.version,
+            description: await this.formatText(
+              plugin.id,
+              plugin.arches[0],
+              lang,
+              plugin.description
+            ),
+            icon: plugin.icon,
+            background: plugin.background,
+            timestamp: plugin.timestamp,
+            author: plugin.author,
+          };
+        })
+        .filter(async plugin => this.isPluginAvailable((await plugin).id, arch))
+    );
   }
 
-  async getPlugin(id: string): Promise<
+  async getPlugin(
+    id: string,
+    lang: string
+  ): Promise<
     | {
         id: string;
         name: string;
@@ -92,9 +110,14 @@ export class PluginsManager {
       ? undefined
       : {
           id: plugin.id,
-          name: plugin.name,
+          name: await this.formatText(id, plugin.arches[0], lang, plugin.name),
           version: plugin.version,
-          description: plugin.description,
+          description: await this.formatText(
+            id,
+            plugin.arches[0],
+            lang,
+            plugin.description
+          ),
           icon: plugin.icon,
           background: plugin.background,
           author: plugin.author,
@@ -300,7 +323,7 @@ export class PluginsManager {
     }
     const plugin = this.plugins.find(
       (plugin: Plugins) =>
-        plugin.name === id && plugin.arches.includes(arch) && arch !== undefined
+        plugin.id === id && plugin.arches.includes(arch) && arch !== undefined
     );
     if (
       plugin === undefined ||
@@ -317,11 +340,11 @@ export class PluginsManager {
           '/../..' +
           process.env.DATA_DIRECTORY +
           '/' +
-          plugin.name +
+          plugin.id +
           '/' +
           arch +
           '/' +
-          plugin.name +
+          plugin.id +
           '.jpl',
         'data/' + plugin.background
       )
@@ -351,5 +374,53 @@ export class PluginsManager {
         this.archesResolution.set(platform, arches);
       }
     }
+  }
+
+  private async formatText(
+    id: string,
+    arch: string,
+    language: string,
+    text: string
+  ): Promise<string> {
+    return await this.findLanguageFile(id, arch, language).then(
+      async (languageFile: string) => {
+        const pluginPath = await this.getPluginPath(id, arch);
+        if (pluginPath === undefined) {
+          return text;
+        }
+        return await this.fileManager
+          .readArchive(pluginPath, 'data/locale/' + languageFile)
+          .then((languageFileContent: string) => {
+            if (languageFileContent === '') {
+              return text;
+            }
+            const languageFileContentParsed = JSON.parse(languageFileContent);
+
+            return text.replace(
+              /(\{\{([^}]+)\}\})/g,
+              (_: string, p1: string) => {
+                return languageFileContentParsed[
+                  p1.substring(2, p1.length - 2)
+                ];
+              }
+            );
+          });
+      }
+    );
+  }
+
+  private async findLanguageFile(
+    id: string,
+    arch: string,
+    language: string
+  ): Promise<string> {
+    const pluginPath = await this.getPluginPath(id, arch);
+    if (pluginPath === undefined) {
+      return id + '_en';
+    }
+    const languageFile = (
+      await this.fileManager.listArchiveFiles(pluginPath, '/data/locale/')
+    ).find((file: string) => file.includes(language));
+    return languageFile === undefined ? id + '_en.json' : languageFile;
   }
 }

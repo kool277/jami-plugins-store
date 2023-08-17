@@ -38,7 +38,6 @@ export class FileManagerService {
       }
       return await promises.readdir(path);
     } catch (e) {
-      console.log(e);
       return [];
     }
   }
@@ -57,7 +56,6 @@ export class FileManagerService {
       zip.close();
       return files.map((file: string) => file.split('/')[1]);
     } catch (e) {
-      console.log(e);
       return [];
     }
   }
@@ -70,7 +68,6 @@ export class FileManagerService {
       zip.close();
       return await Promise.resolve(content.toString());
     } catch (e) {
-      console.log(e);
       return await Promise.resolve('');
     }
   }
