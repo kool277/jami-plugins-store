@@ -177,13 +177,13 @@ describe('Routes', function () {
 
   it("should get icon if the given id is valid", (done) => {
     const expectedIcon = 'test';
-    pluginsManagerServiceStub.getIcon.resolves(expectedIcon);
+    pluginsManagerServiceStub.getIcon.resolves(Buffer.from(expectedIcon));
 
     request(expressApp)
       .get("/icons/test?arch=test")
       .expect(StatusCodes.OK)
       .then((response) => {
-        expect(response.text).toEqual(expectedIcon);
+        expect(response.body).toEqual(Buffer.from(expectedIcon));
         done();
       });
   });

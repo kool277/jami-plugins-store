@@ -61,16 +61,12 @@ export class FileManagerService {
     }
   }
 
-  async readArchive(path: string, file: string): Promise<string> {
-    try {
-      // eslint-disable-next-line
+  async readArchive(path: string, file: string): Promise<Buffer> {
+    // eslint-disable-next-line
       const zip = new StreamZip.async({ file: path });
-      const content = await zip.entryData(file);
-      zip.close();
-      return await Promise.resolve(content.toString());
-    } catch (e) {
-      return await Promise.resolve('');
-    }
+    const content = await zip.entryData(file);
+    zip.close();
+    return content;
   }
 
   async getStat(path: string): Promise<Stats> {

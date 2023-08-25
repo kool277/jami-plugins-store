@@ -244,7 +244,7 @@ describe('Plugins manager service tests', function () {
             version: '1.0.0',
         };
 
-        fileManager.readArchive.resolves(JSON.stringify(manifest));
+        fileManager.readArchive.resolves(Buffer.from(JSON.stringify(manifest)));
 
         const actual = await pluginsManagerService['readManifest'](pluginPath);
 
@@ -280,12 +280,12 @@ describe('Plugins manager service tests', function () {
 
         const expected = 'test';
 
-        fileManager.readArchive.resolves(JSON.stringify(manifest));
-        fileManager.readArchive.resolves(expected);
+        fileManager.readArchive.resolves(Buffer.from(JSON.stringify(manifest)));
+        fileManager.readArchive.resolves(Buffer.from(expected));
         stub(Object.getPrototypeOf(pluginsManagerService), 'getPlatform').returns(['test']);
         const actual = await pluginsManagerService['getIcon']("test", "test");
 
-        expect(actual).toEqual(expected);
+        expect(actual).toEqual(Buffer.from(expected));
     });
 
     it('should return an array of plugin versions', async () => {

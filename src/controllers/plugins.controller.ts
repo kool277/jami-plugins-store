@@ -20,6 +20,7 @@ import {PluginsManager} from '../services/plugins_manager.service';
 import {type Request, type Response, Router} from 'express';
 import fs from 'fs';
 import {Service} from 'typedi';
+import {NotFoundException} from '../interfaces/NotFoundException';
 import {StatusCodes} from 'http-status-codes';
 import {LanguageManager} from '../services/language_manager.service';
 
@@ -290,13 +291,12 @@ export class PluginsController {
           req.params.id,
           req.query.arch as string
         );
-        if (icon === '') {
-          console.log('sending not found ' + icon);
+        res.status(StatusCodes.OK).send(icon);
+      } catch (e) {
+        if (e instanceof NotFoundException) {
           res.status(StatusCodes.NOT_FOUND).send();
           return;
         }
-        res.status(StatusCodes.OK).send(icon);
-      } catch (e) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
       }
     });
@@ -394,12 +394,14 @@ export class PluginsController {
           req.params.id,
           req.query.arch as string
         );
-        res
-          .status(background === '' ? StatusCodes.NOT_FOUND : StatusCodes.OK)
-          .send(background === '' ? undefined : background);
+        res.status(StatusCodes.OK).send(background);
         return;
       } catch (e) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+        if (e instanceof NotFoundException) {
+          res.status(StatusCodes.NOT_FOUND).send();
+          return;
+        }
+        res.status(StatusCodes.NOT_FOUND).send();
       }
     });
   }

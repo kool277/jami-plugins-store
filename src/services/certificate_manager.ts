@@ -34,8 +34,8 @@ export class CertificateManagerService {
   ): Promise<X509Certificate> {
     return await this.fileManager
       .readArchive(path, file)
-      .then((content: string) => {
-        return new X509Certificate(Buffer.from(content));
+      .then((content: Buffer) => {
+        return new X509Certificate(content);
       });
   }
 

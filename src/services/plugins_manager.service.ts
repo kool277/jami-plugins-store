@@ -20,6 +20,7 @@ import {Service} from 'typedi';
 import {FileManagerService} from './file_manager.service';
 import {type Plugins} from '../interfaces/plugins';
 import {CertificateManagerService} from './certificate_manager';
+import {NotFoundException} from '../interfaces/NotFoundException';
 import {basename, extname} from 'path';
 
 @Service()
@@ -216,7 +217,7 @@ export class PluginsManager {
     background: string;
   }> {
     const manifest = JSON.parse(
-      await this.fileManager.readArchive(path, 'manifest.json')
+      (await this.fileManager.readArchive(path, 'manifest.json')).toString()
     );
     return {
       id: manifest.id === undefined ? manifest.name : manifest.id,
@@ -231,7 +232,7 @@ export class PluginsManager {
   async getIcon(
     id: string,
     arch: string | undefined = undefined
-  ): Promise<string> {
+  ): Promise<Buffer> {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
@@ -248,7 +249,7 @@ export class PluginsManager {
       plugin.icon === undefined ||
       platform === undefined
     ) {
-      return '';
+      throw new NotFoundException('Plugin not found');
     }
 
     return await this.fileManager.readArchive(
@@ -321,7 +322,7 @@ export class PluginsManager {
           [platformPath]
         );
         // TODO: should refactor this because it's possible that two plugins in different platform have the same id
-        if ( plugin === undefined) {
+        if (plugin === undefined) {
           continue;
         }
         plugins.push(plugin);
@@ -330,7 +331,7 @@ export class PluginsManager {
     this.plugins = plugins;
   }
 
-  async getPluginBackground(id: string, arch: string): Promise<string> {
+  async getPluginBackground(id: string, arch: string): Promise<Buffer> {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
@@ -345,30 +346,23 @@ export class PluginsManager {
       plugin.background === undefined ||
       platform === undefined
     ) {
-      return '';
+      throw new NotFoundException('Plugin not found');
     }
 
-    return await this.fileManager
-      .readArchive(
-        // eslint-disable-next-line
+    return await this.fileManager.readArchive(
+      // eslint-disable-next-line
       __dirname +
-          '/../..' +
-          process.env.DATA_DIRECTORY +
-          '/' +
-          plugin.id +
-          '/' +
-          platform +
-          '/' +
-          plugin.id +
-          '.jpl',
-        'data/' + plugin.background
-      )
-      .then(data => {
-        return data;
-      })
-      .catch(e => {
-        return '';
-      });
+        '/../..' +
+        process.env.DATA_DIRECTORY +
+        '/' +
+        plugin.id +
+        '/' +
+        platform +
+        '/' +
+        plugin.id +
+        '.jpl',
+      'data/' + plugin.background
+    );
   }
 
   private addPluginArch(platforms: string[], arches: string[]): void {
@@ -411,12 +405,13 @@ export class PluginsManager {
         }
         return await this.fileManager
           .readArchive(pluginPath, 'data/locale/' + languageFile)
-          .then((languageFileContent: string) => {
-            if (languageFileContent === '') {
+          .then((languageFileContent: Buffer) => {
+            if (languageFileContent.length === 0) {
               return text;
             }
-            const languageFileContentParsed = JSON.parse(languageFileContent);
-
+            const languageFileContentParsed = JSON.parse(
+              languageFileContent.toString()
+            );
             return text.replace(
               /(\{\{([^}]+)\}\})/g,
               (_: string, p1: string) => {

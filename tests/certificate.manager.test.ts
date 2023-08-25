@@ -56,7 +56,7 @@ describe('Certificate manager service tests', function () {
         const expectedCertificate = await promises.readFile(`${__dirname}/TestCertificate.crt`);
         const expectedSubject = 'CN=Test';
 
-        fileManager.readArchive.resolves(expectedCertificate.toString());
+        fileManager.readArchive.resolves(expectedCertificate);
 
         const actual = await certificateManagerService['readCertificate'](path, file);
 
