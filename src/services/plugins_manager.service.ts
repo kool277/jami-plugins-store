@@ -59,6 +59,7 @@ export class PluginsManager {
     }
     return await Promise.all(
       this.plugins
+        .filter(plugin => this.isPluginAvailable(plugin.id, arch))
         .map(async (plugin: Plugins) => {
           return {
             id: plugin.id,
@@ -81,7 +82,6 @@ export class PluginsManager {
             author: plugin.author,
           };
         })
-        .filter(async plugin => this.isPluginAvailable((await plugin).id, arch))
     );
   }
 
@@ -137,6 +137,10 @@ export class PluginsManager {
     ) {
       return undefined;
     }
+    const platform = this.getPlatform(arch);
+    if (platform === undefined) {
+      return undefined;
+    }
     return (
       // eslint-disable-next-line
       __dirname +
@@ -145,11 +149,17 @@ export class PluginsManager {
       '/' +
       id +
       '/' +
-      arch +
+      platform +
       '/' +
       id +
       '.jpl'
     );
+  }
+
+  getPlatform(arch: string): string | undefined {
+    return Array.from(this.archesResolution.entries()).find(([_, value]) =>
+      value.includes(arch)
+    )?.[0];
   }
 
   async getNewPlugin(
@@ -231,10 +241,12 @@ export class PluginsManager {
         plugin.arches.includes(arch as string) &&
         arch !== undefined
     );
+    const platform = this.getPlatform(arch as string);
     if (
       plugin === undefined ||
       process.env.DATA_DIRECTORY === undefined ||
-      plugin.icon === undefined
+      plugin.icon === undefined ||
+      platform === undefined
     ) {
       return '';
     }
@@ -247,7 +259,7 @@ export class PluginsManager {
         '/' +
         plugin.id +
         '/' +
-        arch +
+        platform +
         '/' +
         plugin.id +
         '.jpl',
@@ -284,7 +296,7 @@ export class PluginsManager {
     }
     // eslint-disable-next-line
     dataDirectory = __dirname + '/../..' + dataDirectory;
-    const plugins = [];
+    const plugins: Plugins[] = [];
     const pluginsPath = await this.fileManager.listFiles(dataDirectory);
     if (pluginsPath === undefined || pluginsPath.length === 0) {
       return;
@@ -308,7 +320,8 @@ export class PluginsManager {
             '.jpl',
           [platformPath]
         );
-        if (plugin === undefined) {
+        // TODO: should refactor this because it's possible that two plugins in different platform have the same id
+        if ( plugin === undefined) {
           continue;
         }
         plugins.push(plugin);
@@ -325,10 +338,12 @@ export class PluginsManager {
       (plugin: Plugins) =>
         plugin.id === id && plugin.arches.includes(arch) && arch !== undefined
     );
+    const platform = this.getPlatform(arch);
     if (
       plugin === undefined ||
       process.env.DATA_DIRECTORY === undefined ||
-      plugin.background === undefined
+      plugin.background === undefined ||
+      platform === undefined
     ) {
       return '';
     }
@@ -342,7 +357,7 @@ export class PluginsManager {
           '/' +
           plugin.id +
           '/' +
-          arch +
+          platform +
           '/' +
           plugin.id +
           '.jpl',
@@ -361,7 +376,10 @@ export class PluginsManager {
       if (this.archesResolution.has(platform)) {
         const oldArches = this.archesResolution.get(platform);
         if (oldArches === undefined) {
-          this.archesResolution.set(platform, arches);
+          this.archesResolution.set(
+            platform,
+            JSON.parse(JSON.stringify(arches))
+          );
           continue;
         }
         for (const arch of arches) {
@@ -369,9 +387,12 @@ export class PluginsManager {
             oldArches.push(arch);
           }
         }
-        this.archesResolution.set(platform, oldArches);
+        this.archesResolution.set(
+          platform,
+          JSON.parse(JSON.stringify(oldArches))
+        );
       } else {
-        this.archesResolution.set(platform, arches);
+        this.archesResolution.set(platform, JSON.parse(JSON.stringify(arches)));
       }
     }
   }

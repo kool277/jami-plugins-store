@@ -49,12 +49,13 @@ export class FileManagerService {
       const zip = new StreamZip.async({ file: path });
       const entries = await zip.entries();
       for (const entry of Object.values(entries)) {
-        if (entry.name.startsWith(folderPath)) {
-          files.push(entry.name);
+        const lib = entry.name.split('/')[1];
+        if (entry.name.startsWith(folderPath) && !files.includes(lib)) {
+          files.push(lib);
         }
       }
       zip.close();
-      return files.map((file: string) => file.split('/')[1]);
+      return files;
     } catch (e) {
       return [];
     }

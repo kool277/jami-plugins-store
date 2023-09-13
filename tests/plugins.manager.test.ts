@@ -128,7 +128,7 @@ describe('Plugins manager service tests', function () {
         process.env.DATA_DIRECTORY = '/path/to/plugins';
 
         stub(Object.getPrototypeOf(pluginsManagerService), 'isPluginAvailable').returns(true);
-
+        stub(Object.getPrototypeOf(pluginsManagerService), 'getPlatform').returns(['test']);
         const actualPath = await pluginsManagerService.getPluginPath('test', 'test');
 
         expect(actualPath).toContain(expectedPath);
@@ -282,7 +282,7 @@ describe('Plugins manager service tests', function () {
 
         fileManager.readArchive.resolves(JSON.stringify(manifest));
         fileManager.readArchive.resolves(expected);
-
+        stub(Object.getPrototypeOf(pluginsManagerService), 'getPlatform').returns(['test']);
         const actual = await pluginsManagerService['getIcon']("test", "test");
 
         expect(actual).toEqual(expected);
