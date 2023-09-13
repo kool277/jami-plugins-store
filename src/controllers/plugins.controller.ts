@@ -291,7 +291,10 @@ export class PluginsController {
           req.params.id,
           req.query.arch as string
         );
-        res.status(StatusCodes.OK).send(icon);
+        res
+          .setHeader('Content-Type', icon.type)
+          .status(StatusCodes.OK)
+          .send(icon.content);
       } catch (e) {
         if (e instanceof NotFoundException) {
           res.status(StatusCodes.NOT_FOUND).send();
@@ -394,7 +397,10 @@ export class PluginsController {
           req.params.id,
           req.query.arch as string
         );
-        res.status(StatusCodes.OK).send(background);
+        res
+          .setHeader('Content-Type', background.type)
+          .status(StatusCodes.OK)
+          .send(background.content);
         return;
       } catch (e) {
         if (e instanceof NotFoundException) {

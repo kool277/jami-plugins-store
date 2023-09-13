@@ -285,7 +285,7 @@ describe('Plugins manager service tests', function () {
         stub(Object.getPrototypeOf(pluginsManagerService), 'getPlatform').returns(['test']);
         const actual = await pluginsManagerService['getIcon']("test", "test");
 
-        expect(actual).toEqual(Buffer.from(expected));
+        expect(actual.content).toEqual(Buffer.from(expected));
     });
 
     it('should return an array of plugin versions', async () => {

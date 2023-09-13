@@ -80,4 +80,20 @@ export class FileManagerService {
       return undefined;
     }
   }
+
+  getImageContentType(buffer: Buffer): string {
+    const fileSignature = buffer.toString('hex', 0, 4);
+    switch (fileSignature) {
+      case '89504e47':
+        return 'image/png';
+      case '47494638':
+        return 'image/gif';
+      case 'ffd8ffe0':
+      case 'ffd8ffe1':
+      case 'ffd8ffe2':
+        return 'image/jpeg';
+      default:
+        return 'application/octet-stream';
+    }
+  }
 }

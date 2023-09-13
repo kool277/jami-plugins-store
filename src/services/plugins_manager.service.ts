@@ -232,7 +232,7 @@ export class PluginsManager {
   async getIcon(
     id: string,
     arch: string | undefined = undefined
-  ): Promise<Buffer> {
+  ): Promise<{content: Buffer; type: string}> {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
@@ -251,8 +251,7 @@ export class PluginsManager {
     ) {
       throw new NotFoundException('Plugin not found');
     }
-
-    return await this.fileManager.readArchive(
+    const content = await this.fileManager.readArchive(
       // eslint-disable-next-line
       __dirname +
         '/../..' +
@@ -266,6 +265,10 @@ export class PluginsManager {
         '.jpl',
       'data/' + plugin.icon
     );
+    return {
+      content,
+      type: this.fileManager.getImageContentType(content),
+    };
   }
 
   async getVersions(): Promise<Array<{id: string; version: string}>> {
@@ -331,7 +334,10 @@ export class PluginsManager {
     this.plugins = plugins;
   }
 
-  async getPluginBackground(id: string, arch: string): Promise<Buffer> {
+  async getPluginBackground(
+    id: string,
+    arch: string
+  ): Promise<{content: Buffer; type: string}> {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
@@ -348,8 +354,7 @@ export class PluginsManager {
     ) {
       throw new NotFoundException('Plugin not found');
     }
-
-    return await this.fileManager.readArchive(
+    const content = await this.fileManager.readArchive(
       // eslint-disable-next-line
       __dirname +
         '/../..' +
@@ -363,6 +368,10 @@ export class PluginsManager {
         '.jpl',
       'data/' + plugin.background
     );
+    return {
+      content,
+      type: this.fileManager.getImageContentType(content),
+    };
   }
 
   private addPluginArch(platforms: string[], arches: string[]): void {

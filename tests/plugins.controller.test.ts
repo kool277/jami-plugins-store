@@ -177,7 +177,7 @@ describe('Routes', function () {
 
   it("should get icon if the given id is valid", (done) => {
     const expectedIcon = 'test';
-    pluginsManagerServiceStub.getIcon.resolves(Buffer.from(expectedIcon));
+    pluginsManagerServiceStub.getIcon.resolves({content: Buffer.from(expectedIcon), type: 'image/png'});
 
     request(expressApp)
       .get("/icons/test?arch=test")
