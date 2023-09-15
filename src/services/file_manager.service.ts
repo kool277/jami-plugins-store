@@ -18,6 +18,7 @@
 import {type Stats, promises, watch, type FSWatcher} from 'fs';
 import {Service} from 'typedi';
 import StreamZip from 'node-stream-zip';
+import sharp from 'sharp';
 @Service()
 export class FileManagerService {
   async readFile(path: string): Promise<Buffer> {
@@ -81,19 +82,8 @@ export class FileManagerService {
     }
   }
 
-  getImageContentType(buffer: Buffer): string {
-    const fileSignature = buffer.toString('hex', 0, 4);
-    switch (fileSignature) {
-      case '89504e47':
-        return 'image/png';
-      case '47494638':
-        return 'image/gif';
-      case 'ffd8ffe0':
-      case 'ffd8ffe1':
-      case 'ffd8ffe2':
-        return 'image/jpeg';
-      default:
-        return 'application/octet-stream';
-    }
+  async getImageContentType(buffer: Buffer): Promise<string> {
+    const metadata = await sharp(buffer).metadata();
+    return metadata.format ?? 'application/octet-stream';
   }
 }

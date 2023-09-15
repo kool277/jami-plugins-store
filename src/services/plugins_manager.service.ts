@@ -267,7 +267,7 @@ export class PluginsManager {
     );
     return {
       content,
-      type: this.fileManager.getImageContentType(content),
+      type: await this.fileManager.getImageContentType(content),
     };
   }
 
@@ -370,7 +370,7 @@ export class PluginsManager {
     );
     return {
       content,
-      type: this.fileManager.getImageContentType(content),
+      type: await this.fileManager.getImageContentType(content),
     };
   }
 
