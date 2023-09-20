@@ -20,7 +20,7 @@ import 'reflect-metadata';
 import 'module-alias/register';
 import { promises } from 'fs';
 import Sinon, { createStubInstance, restore, stub } from 'sinon';
-import { FileManagerService } from '../src/services/file_manager.service';
+import { FileManagerService } from '../src/services/file.manager.service';
 import { CertificateManagerService } from '../src/services/certificate_manager';
 
 describe('Certificate manager service tests', function () {

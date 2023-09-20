@@ -16,13 +16,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-import {PluginsManager} from '../services/plugins_manager.service';
+import {PluginsManager} from '../services/plugins.manager.service';
 import {type Request, type Response, Router} from 'express';
 import fs from 'fs';
 import {Service} from 'typedi';
 import {NotFoundException} from '../interfaces/NotFoundException';
 import {StatusCodes} from 'http-status-codes';
-import {LanguageManager} from '../services/language_manager.service';
+import {IconsService} from '../services/icons.service';
+import {BackgroundsService} from '../services/backgrounds.service';
+import {TranslationService} from '../services/translation.service';
 
 @Service()
 export class PluginsController {
@@ -30,7 +32,9 @@ export class PluginsController {
 
   constructor(
     private readonly pluginsManager: PluginsManager,
-    private readonly languageManager: LanguageManager
+    private readonly translation: TranslationService,
+    private readonly iconsManager: IconsService,
+    private readonly backgroundsManager: BackgroundsService
   ) {
     this.configureRouter();
   }
@@ -88,7 +92,7 @@ export class PluginsController {
         if (langs === undefined) {
           langs = 'en';
         }
-        const lang = this.languageManager.getLanguage(langs);
+        const lang = this.translation.getLanguage(langs);
         const arch: string = req.query.arch as string;
         if (arch === undefined) {
           res.status(StatusCodes.BAD_REQUEST).send();
@@ -151,7 +155,7 @@ export class PluginsController {
         if (langs === undefined) {
           langs = 'en';
         }
-        const lang = this.languageManager.getLanguage(langs);
+        const lang = this.translation.getLanguage(langs);
         const pluginId: string = req.params.id;
         const arch: string = req.query.arch as string;
         if (pluginId === undefined || arch === undefined) {
@@ -287,7 +291,7 @@ export class PluginsController {
           res.status(StatusCodes.BAD_REQUEST).send();
           return;
         }
-        const icon = await this.pluginsManager.getIcon(
+        const icon = await this.iconsManager.getImage(
           req.params.id,
           req.query.arch as string
         );
@@ -393,7 +397,7 @@ export class PluginsController {
           res.status(StatusCodes.BAD_REQUEST).send();
           return;
         }
-        const background = await this.pluginsManager.getPluginBackground(
+        const background = await this.backgroundsManager.getImage(
           req.params.id,
           req.query.arch as string
         );

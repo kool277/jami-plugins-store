@@ -20,23 +20,35 @@ import 'reflect-metadata';
 import 'module-alias/register';
 
 import { createStubInstance, SinonStubbedInstance, restore } from 'sinon';
-import { PluginsManager } from "../src/services/plugins_manager.service";
+import { PluginsManager } from "../src/services/plugins.manager.service";
 import { StatusCodes } from 'http-status-codes';
 import { Application } from "../src/app";
 import { Container } from "typedi";
 import request from "supertest";
 import fs from "fs";
+import { TranslationService } from '../src/services/translation.service';
+import { IconsService } from '../src/services/icons.service';
+import { BackgroundsService } from '../src/services/backgrounds.service';
 
 describe('Routes', function () {
 
   let pluginsManagerServiceStub: SinonStubbedInstance<PluginsManager>;
+  let transaltionStub: SinonStubbedInstance<TranslationService>;
+  let iconsManagerStub: SinonStubbedInstance<IconsService>;
+  let backgroundsService: SinonStubbedInstance<BackgroundsService>;
   let expressApp: Express.Application;
 
   beforeEach(() => {
     pluginsManagerServiceStub = createStubInstance(PluginsManager);
+    transaltionStub = createStubInstance(TranslationService);
+    iconsManagerStub = createStubInstance(IconsService);
+    backgroundsService = createStubInstance(BackgroundsService);
 
     const app = Container.get(Application);
     Object.defineProperty(app['pluginsController'], 'pluginsManager', { value: pluginsManagerServiceStub });
+    Object.defineProperty(app['pluginsController'], 'translation', { value: transaltionStub });
+    Object.defineProperty(app['pluginsController'], 'iconsManager', { value: iconsManagerStub });
+    Object.defineProperty(app['pluginsController'], 'backgroundsManager', { value: BackgroundsService });
     expressApp = app.app;
   });
 
@@ -176,8 +188,8 @@ describe('Routes', function () {
   });
 
   it("should get icon if the given id is valid", (done) => {
-    const expectedIcon = 'test';
-    pluginsManagerServiceStub.getIcon.resolves({content: Buffer.from(expectedIcon), type: 'image/png'});
+    const expectedIcon = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFDQJcGAAAAABJRU5ErkJggg==';
+    iconsManagerStub.getImage.resolves({content: Buffer.from(expectedIcon), type: 'image/png'});
 
     request(expressApp)
       .get("/icons/test?arch=test")
@@ -192,6 +204,25 @@ describe('Routes', function () {
     request(expressApp)
       .get("/icons/test")
       .expect(StatusCodes.BAD_REQUEST)
+      .then((response) => {
+        done();
+      });
+  });
+
+  it("should not get background if an invalid arch is given", (done) => {
+    request(expressApp)
+      .get("/backgrounds/test")
+      .expect(StatusCodes.BAD_REQUEST)
+      .then((response) => {
+        done();
+      });
+  });
+
+  it("should not fetch background if an invalid id is given", (done) => {
+    backgroundsService.getImage.rejects();
+    request(expressApp)
+      .get("/backgrounds/test?arch=test")
+      .expect(StatusCodes.NOT_FOUND)
       .then((response) => {
         done();
       });
@@ -218,4 +249,5 @@ describe('Routes', function () {
         done();
       });
   });
+
 });

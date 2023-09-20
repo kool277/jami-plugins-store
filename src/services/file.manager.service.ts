@@ -18,7 +18,6 @@
 import {type Stats, promises, watch, type FSWatcher} from 'fs';
 import {Service} from 'typedi';
 import StreamZip from 'node-stream-zip';
-import sharp from 'sharp';
 @Service()
 export class FileManagerService {
   async readFile(path: string): Promise<Buffer> {
@@ -80,10 +79,5 @@ export class FileManagerService {
     } catch (e) {
       return undefined;
     }
-  }
-
-  async getImageContentType(buffer: Buffer): Promise<string> {
-    const metadata = await sharp(buffer).metadata();
-    return metadata.format ?? 'application/octet-stream';
   }
 }

@@ -17,24 +17,25 @@
  */
 
 import {Service} from 'typedi';
-import {FileManagerService} from './file_manager.service';
+import {FileManagerService} from './file.manager.service';
 import {type Plugins} from '../interfaces/plugins';
+import {TranslationService} from './translation.service';
 import {CertificateManagerService} from './certificate_manager';
-import {NotFoundException} from '../interfaces/NotFoundException';
+import {ArchitectureManager} from './architecture.manager';
 import {basename, extname} from 'path';
 
 @Service()
 export class PluginsManager {
   private plugins: Plugins[] = [];
-  private readonly archesResolution = new Map<string, string[]>();
   constructor(
+    private readonly architectureManager: ArchitectureManager,
+    private readonly translation: TranslationService,
     private readonly fileManager: FileManagerService,
     private readonly certificateManager: CertificateManagerService
   ) {
     if (process.env.DATA_DIRECTORY === undefined) {
       return;
     }
-
     const watcher = this.fileManager.watchFile(
       // eslint-disable-next-line
       __dirname + '/../..' + process.env.DATA_DIRECTORY
@@ -64,18 +65,18 @@ export class PluginsManager {
         .map(async (plugin: Plugins) => {
           return {
             id: plugin.id,
-            name: await this.formatText(
+            name: await this.translation.formatText(
               plugin.id,
               plugin.arches[0],
               lang,
-              plugin.name
+              await this.getPluginPath(plugin.id, arch)
             ),
             version: plugin.version,
-            description: await this.formatText(
+            description: await this.translation.formatText(
               plugin.id,
               plugin.arches[0],
               lang,
-              plugin.description
+              await this.getPluginPath(plugin.id, arch)
             ),
             icon: plugin.icon,
             background: plugin.background,
@@ -111,9 +112,14 @@ export class PluginsManager {
       ? undefined
       : {
           id: plugin.id,
-          name: await this.formatText(id, plugin.arches[0], lang, plugin.name),
+          name: await this.translation.formatText(
+            id,
+            plugin.arches[0],
+            lang,
+            plugin.name
+          ),
           version: plugin.version,
-          description: await this.formatText(
+          description: await this.translation.formatText(
             id,
             plugin.arches[0],
             lang,
@@ -124,6 +130,16 @@ export class PluginsManager {
           author: plugin.author,
           timestamp: plugin.timestamp,
         };
+  }
+
+  async findPlugin(id: string, arch: string): Promise<Plugins | undefined> {
+    if (this.plugins.length === 0) {
+      await this.setPlugins();
+    }
+    return this.plugins.find(
+      (plugin: Plugins) =>
+        plugin.id === id && plugin.arches.includes(arch) && arch !== undefined
+    );
   }
 
   async getPluginPath(id: string, arch: string): Promise<string | undefined> {
@@ -138,7 +154,7 @@ export class PluginsManager {
     ) {
       return undefined;
     }
-    const platform = this.getPlatform(arch);
+    const platform = this.architectureManager.getPlatform(arch);
     if (platform === undefined) {
       return undefined;
     }
@@ -157,10 +173,11 @@ export class PluginsManager {
     );
   }
 
-  getPlatform(arch: string): string | undefined {
-    return Array.from(this.archesResolution.entries()).find(([_, value]) =>
-      value.includes(arch)
-    )?.[0];
+  private isPluginAvailable(id: string, arch: string): boolean {
+    const plugin = this.plugins.find((plugin: Plugins) => {
+      return plugin.id === id && plugin.arches.includes(arch);
+    });
+    return plugin !== undefined;
   }
 
   async getNewPlugin(
@@ -174,11 +191,11 @@ export class PluginsManager {
         path,
         basename(path, extname(path)) + '.crt'
       );
-      const arches = await this.getAllPluginArches(path);
+      const arches = await this.architectureManager.getAllPluginArches(path);
       if (issuer === undefined || arches === undefined) {
         return;
       }
-      this.addPluginArch(platforms, arches);
+      this.architectureManager.addPluginArch(platforms, arches);
       return {
         id: plugin.id,
         name: plugin.name,
@@ -195,13 +212,6 @@ export class PluginsManager {
     }
     // eslint-disable-next-line
     return;
-  }
-
-  private isPluginAvailable(id: string, arch: string): boolean {
-    const plugin = this.plugins.find((plugin: Plugins) => {
-      return plugin.id === id && plugin.arches.includes(arch);
-    });
-    return plugin !== undefined;
   }
 
   removePlugin(id: string): void {
@@ -229,48 +239,6 @@ export class PluginsManager {
     };
   }
 
-  async getIcon(
-    id: string,
-    arch: string | undefined = undefined
-  ): Promise<{content: Buffer; type: string}> {
-    if (this.plugins.length === 0) {
-      await this.setPlugins();
-    }
-    const plugin = this.plugins.find(
-      (plugin: Plugins) =>
-        plugin.id === id &&
-        plugin.arches.includes(arch as string) &&
-        arch !== undefined
-    );
-    const platform = this.getPlatform(arch as string);
-    if (
-      plugin === undefined ||
-      process.env.DATA_DIRECTORY === undefined ||
-      plugin.icon === undefined ||
-      platform === undefined
-    ) {
-      throw new NotFoundException('Plugin not found');
-    }
-    const content = await this.fileManager.readArchive(
-      // eslint-disable-next-line
-      __dirname +
-        '/../..' +
-        process.env.DATA_DIRECTORY +
-        '/' +
-        plugin.id +
-        '/' +
-        platform +
-        '/' +
-        plugin.id +
-        '.jpl',
-      'data/' + plugin.icon
-    );
-    return {
-      content,
-      type: await this.fileManager.getImageContentType(content),
-    };
-  }
-
   async getVersions(): Promise<Array<{id: string; version: string}>> {
     if (this.plugins.length === 0) {
       await this.setPlugins();
@@ -286,11 +254,6 @@ export class PluginsManager {
       }
     }
     return versions;
-  }
-
-  async getAllPluginArches(path: string): Promise<string[] | undefined> {
-    // need to be refactored if we still use desktop and android as arch
-    return await this.fileManager.listArchiveFiles(path, 'lib/');
   }
 
   private async setPlugins(): Promise<void> {
@@ -332,120 +295,5 @@ export class PluginsManager {
       }
     }
     this.plugins = plugins;
-  }
-
-  async getPluginBackground(
-    id: string,
-    arch: string
-  ): Promise<{content: Buffer; type: string}> {
-    if (this.plugins.length === 0) {
-      await this.setPlugins();
-    }
-    const plugin = this.plugins.find(
-      (plugin: Plugins) =>
-        plugin.id === id && plugin.arches.includes(arch) && arch !== undefined
-    );
-    const platform = this.getPlatform(arch);
-    if (
-      plugin === undefined ||
-      process.env.DATA_DIRECTORY === undefined ||
-      plugin.background === undefined ||
-      platform === undefined
-    ) {
-      throw new NotFoundException('Plugin not found');
-    }
-    const content = await this.fileManager.readArchive(
-      // eslint-disable-next-line
-      __dirname +
-        '/../..' +
-        process.env.DATA_DIRECTORY +
-        '/' +
-        plugin.id +
-        '/' +
-        platform +
-        '/' +
-        plugin.id +
-        '.jpl',
-      'data/' + plugin.background
-    );
-    return {
-      content,
-      type: await this.fileManager.getImageContentType(content),
-    };
-  }
-
-  private addPluginArch(platforms: string[], arches: string[]): void {
-    for (const platform of platforms) {
-      if (this.archesResolution.has(platform)) {
-        const oldArches = this.archesResolution.get(platform);
-        if (oldArches === undefined) {
-          this.archesResolution.set(
-            platform,
-            JSON.parse(JSON.stringify(arches))
-          );
-          continue;
-        }
-        for (const arch of arches) {
-          if (!oldArches.includes(arch)) {
-            oldArches.push(arch);
-          }
-        }
-        this.archesResolution.set(
-          platform,
-          JSON.parse(JSON.stringify(oldArches))
-        );
-      } else {
-        this.archesResolution.set(platform, JSON.parse(JSON.stringify(arches)));
-      }
-    }
-  }
-
-  private async formatText(
-    id: string,
-    arch: string,
-    language: string,
-    text: string
-  ): Promise<string> {
-    return await this.findLanguageFile(id, arch, language).then(
-      async (languageFile: string) => {
-        const pluginPath = await this.getPluginPath(id, arch);
-        if (pluginPath === undefined) {
-          return text;
-        }
-        return await this.fileManager
-          .readArchive(pluginPath, 'data/locale/' + languageFile)
-          .then((languageFileContent: Buffer) => {
-            if (languageFileContent.length === 0) {
-              return text;
-            }
-            const languageFileContentParsed = JSON.parse(
-              languageFileContent.toString()
-            );
-            return text.replace(
-              /(\{\{([^}]+)\}\})/g,
-              (_: string, p1: string) => {
-                return languageFileContentParsed[
-                  p1.substring(2, p1.length - 2)
-                ];
-              }
-            );
-          });
-      }
-    );
-  }
-
-  private async findLanguageFile(
-    id: string,
-    arch: string,
-    language: string
-  ): Promise<string> {
-    const pluginPath = await this.getPluginPath(id, arch);
-    if (pluginPath === undefined) {
-      return id + '_en';
-    }
-    const languageFile = (
-      await this.fileManager.listArchiveFiles(pluginPath, '/data/locale/')
-    ).find((file: string) => file.includes(language));
-    return languageFile === undefined ? id + '_en.json' : languageFile;
   }
 }

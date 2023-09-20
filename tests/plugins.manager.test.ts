@@ -18,21 +18,28 @@
 
 import 'reflect-metadata';
 import 'module-alias/register';
-import { PluginsManager } from "../src/services/plugins_manager.service";
 import Sinon, { createStubInstance, restore, stub } from 'sinon';
-import { FileManagerService } from '../src/services/file_manager.service';
-import { CertificateManagerService } from '../src/services/certificate_manager';
 import { Stats } from 'fs';
+
+import { PluginsManager } from "../src/services/plugins.manager.service";
+import { FileManagerService } from '../src/services/file.manager.service';
+import { CertificateManagerService } from '../src/services/certificate_manager';
+import { ArchitectureManager } from '../src/services/architecture.manager';
+import { TranslationService } from '../src/services/translation.service';
 
 describe('Plugins manager service tests', function () {
     let pluginsManagerService: PluginsManager;
+    let architectureService: Sinon.SinonStubbedInstance<ArchitectureManager>;
+    let transaltionStub: Sinon.SinonStubbedInstance<TranslationService>;
     let fileManager: Sinon.SinonStubbedInstance<FileManagerService>;
     let certificateManager: Sinon.SinonStubbedInstance<CertificateManagerService>;
 
     beforeEach(() => {
         fileManager = createStubInstance(FileManagerService);
         certificateManager = createStubInstance(CertificateManagerService);
-        pluginsManagerService = new PluginsManager(fileManager, certificateManager);
+        architectureService = createStubInstance(ArchitectureManager);
+        transaltionStub = createStubInstance(TranslationService);
+        pluginsManagerService = new PluginsManager(architectureService, transaltionStub, fileManager, certificateManager);
     });
 
     afterEach(() => {
@@ -45,7 +52,7 @@ describe('Plugins manager service tests', function () {
                 id: 'test',
                 name: 'test',
                 version: '',
-                description: '',
+                description: 'test',
                 icon: '',
                 arches: ['test'],
                 timestamp: '',
@@ -58,13 +65,13 @@ describe('Plugins manager service tests', function () {
                 id: 'test',
                 name: 'test',
                 version: '',
-                description: '',
+                description: 'test',
                 icon: '',
                 background: '',
                 timestamp: '',
                 author: ''
             }];
-
+        transaltionStub.formatText.resolves(expectedPlugin[0].description);
         stub(Object.getPrototypeOf(pluginsManagerService), 'isPluginAvailable').returns(true);
         pluginsManagerService['plugins'] = fakePlugin;
         const actual = await pluginsManagerService.getPlugins('test', 'en');
@@ -89,8 +96,8 @@ describe('Plugins manager service tests', function () {
             arches: ["test"],
         }];
 
-    pluginsManagerService['plugins'] = expected;
-
+        pluginsManagerService['plugins'] = expected;
+        transaltionStub.formatText.resolves(plugin.name);
         const actual = await pluginsManagerService.getPlugin("test", 'en');
 
         expect(actual).toEqual(plugin);
@@ -128,7 +135,7 @@ describe('Plugins manager service tests', function () {
         process.env.DATA_DIRECTORY = '/path/to/plugins';
 
         stub(Object.getPrototypeOf(pluginsManagerService), 'isPluginAvailable').returns(true);
-        stub(Object.getPrototypeOf(pluginsManagerService), 'getPlatform').returns(['test']);
+        architectureService.getPlatform.returns('test');
         const actualPath = await pluginsManagerService.getPluginPath('test', 'test');
 
         expect(actualPath).toContain(expectedPath);
@@ -150,7 +157,7 @@ describe('Plugins manager service tests', function () {
         };
         const expectedTimestamp = 'test';
         stub(Object.getPrototypeOf(pluginsManagerService), 'readManifest').resolves(manifest);
-        stub(Object.getPrototypeOf(pluginsManagerService), 'getAllPluginArches').resolves(['arch1', 'arch2']);
+        architectureService.getAllPluginArches.resolves(['arch1', 'arch2']);
         fileManager.getStat.resolves({ mtime: { toString: () => expectedTimestamp } } as Stats);
 
         certificateManager.getIssuer.resolves({ CN: 'author' });
@@ -184,7 +191,7 @@ describe('Plugins manager service tests', function () {
         };
         const expectedTimestamp = 'test';
         stub(Object.getPrototypeOf(pluginsManagerService), 'readManifest').resolves(manifest);
-        stub(Object.getPrototypeOf(pluginsManagerService), 'getAllPluginArches').resolves(['arch1', 'arch2']);
+        architectureService.getAllPluginArches.resolves(['arch1', 'arch2']);
         fileManager.getStat.resolves({ mtime: { toString: () => expectedTimestamp } } as Stats);
 
         certificateManager.getIssuer.resolves({ CN: 'author' });
@@ -192,7 +199,7 @@ describe('Plugins manager service tests', function () {
         // Get the modification timestamp of the file
 
         await pluginsManagerService.getNewPlugin(pluginPath, ['test']);
-        await pluginsManagerService.removePlugin('test');
+        pluginsManagerService.removePlugin('test');
         const isAvailable = pluginsManagerService['isPluginAvailable']('test', 'test');
         expect(isAvailable).toBeFalsy();
     });
@@ -251,43 +258,6 @@ describe('Plugins manager service tests', function () {
         expect(actual).toEqual(expected);
     });
 
-    it('should return the icon content for a valid plugin', async () => {
-
-        const plugin = {
-            id: 'test',
-            name: 'test',
-            version: '1.0.0',
-            description: 'test',
-            icon: 'test',
-            background: 'test',
-            timestamp: 'test',
-            author: 'test',
-        };
-
-        const pluginVamped = [{
-            ...plugin,
-            arches: ["test"],
-        }];
-
-        pluginsManagerService['plugins'] = pluginVamped;
-
-        const manifest = {
-            name: 'test',
-            version: '1.0.0',
-            description: 'test',
-            iconPath: 'test',
-        };
-
-        const expected = 'test';
-
-        fileManager.readArchive.resolves(Buffer.from(JSON.stringify(manifest)));
-        fileManager.readArchive.resolves(Buffer.from(expected));
-        stub(Object.getPrototypeOf(pluginsManagerService), 'getPlatform').returns(['test']);
-        const actual = await pluginsManagerService['getIcon']("test", "test");
-
-        expect(actual.content).toEqual(Buffer.from(expected));
-    });
-
     it('should return an array of plugin versions', async () => {
         const plugins = [
             {
@@ -338,17 +308,6 @@ describe('Plugins manager service tests', function () {
         expect(actualVersions).toEqual(expectedVersions);
     });
 
-    it('should return an array of plugin arches', async () => {
-        const pluginPath = '/path/to/plugin.jpl';
-        const expectedArches = ['x64', 'x86'];
-
-        // Stub the required method for this test
-        fileManager.listArchiveFiles.withArgs(pluginPath, 'lib/').resolves(expectedArches);
-
-        const actualArches = await pluginsManagerService['getAllPluginArches'](pluginPath);
-
-        expect(actualArches).toEqual(expectedArches);
-    });
 
     it('should return undefined', async () => {
 

@@ -16,7 +16,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 import {Service} from 'typedi';
-import {FileManagerService} from './file_manager.service';
+import {FileManagerService} from './file.manager.service';
 import {X509Certificate} from 'crypto';
 
 @Service()
