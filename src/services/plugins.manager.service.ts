@@ -67,15 +67,15 @@ export class PluginsManager {
             id: plugin.id,
             name: await this.translation.formatText(
               plugin.id,
-              plugin.arches[0],
               lang,
+              plugin.name,
               await this.getPluginPath(plugin.id, arch)
             ),
             version: plugin.version,
             description: await this.translation.formatText(
               plugin.id,
-              plugin.arches[0],
               lang,
+              plugin.description,
               await this.getPluginPath(plugin.id, arch)
             ),
             icon: plugin.icon,
