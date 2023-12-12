@@ -23,6 +23,7 @@ import {TranslationService} from './translation.service';
 import {CertificateManager} from './certificate.manager.service';
 import {ArchitectureManager} from './architecture.manager';
 import {basename, extname} from 'path';
+import {X509Certificate} from 'crypto';
 
 @Service()
 export class PluginsManager {
@@ -251,6 +252,27 @@ export class PluginsManager {
       icon: manifest.iconPath,
       background: manifest.backgroundPath,
     };
+  }
+
+  async isPluginUploadable(
+    id: string,
+    arch: string,
+    requestCertificate: Buffer
+  ): Promise<boolean> {
+    const requestedCertificate = new X509Certificate(requestCertificate);
+    const remotePlugin = await this.findPlugin(id, arch);
+    const remotePluginPath = await this.getPluginPath(id, arch);
+    if (remotePlugin === undefined || remotePluginPath === undefined) {
+      return true;
+    }
+    const remoteCertificate = await this.certificateManager.readCertificate(
+      remotePluginPath,
+      id + '.crt'
+    );
+    return this.certificateManager.isSameKey(
+      requestedCertificate,
+      remoteCertificate
+    );
   }
 
   async getVersions(): Promise<Array<{id: string; version: string}>> {

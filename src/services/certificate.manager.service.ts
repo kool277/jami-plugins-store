@@ -66,10 +66,7 @@ export class CertificateManager {
     return Buffer.compare(signature, checkSignature) === 0;
   }
 
-  private async readCertificate(
-    path: string,
-    file: string
-  ): Promise<X509Certificate> {
+  async readCertificate(path: string, file: string): Promise<X509Certificate> {
     return await this.fileManager
       .readArchive(path, file)
       .then((content: Buffer) => {
@@ -89,5 +86,17 @@ export class CertificateManager {
         acc[key] = value;
         return acc;
       }, {});
+  }
+
+  isSameKey(issuer: X509Certificate, plugin: X509Certificate): boolean {
+    const key1Formatted = issuer.publicKey.export({
+      format: 'pem',
+      type: 'pkcs1',
+    });
+    const key2Formatted = plugin.publicKey.export({
+      format: 'pem',
+      type: 'pkcs1',
+    });
+    return key1Formatted === key2Formatted;
   }
 }

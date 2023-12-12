@@ -247,6 +247,67 @@ export class PluginsController {
         }
       }
     );
+    /**
+     * @swagger
+     *
+     * /upload/{arch}/{id}:
+     *   get:
+     *     summary: Verify if the plugin is already uploaded with the same issuer
+     *     description: Verify if the plugin is already uploaded with the same issuer
+     *     tags: [Example, Time]
+     *     parameters:
+     *       - name: id
+     *         in: path
+     *         description: The ID of the plugin to be downloaded.
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - name: arch
+     *         in: path
+     *         description: The architecture for which the plugin is requested.
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       '200':
+     *         description: The plugin is uploadable.
+     *       '400':
+     *         description: Bad request - When the 'id', 'arch' parameter or the 'Authorization' http header is missing.
+     *       '403':
+     *         description: Forbidden - When the plugin is already uploaded with a different issuer.
+     *       '500':
+     *         description: Internal server error - Something went wrong on the server.
+     *
+     */
+
+    // GET /upload/:arch/:id
+    this.router.get('/upload/:arch/:id', (req: Request, res: Response) => {
+      try {
+        const clientCertificate = req.get('Authorization');
+        if (
+          req.params.id === undefined ||
+          req.params.arch === undefined ||
+          clientCertificate === undefined
+        ) {
+          res.status(StatusCodes.BAD_REQUEST).send();
+          return;
+        }
+        this.pluginsManager
+          .isPluginUploadable(
+            req.params.id,
+            req.params.arch,
+            Buffer.from(clientCertificate, 'base64')
+          )
+          .then(isUploadable =>
+            res
+              .status(isUploadable ? StatusCodes.OK : StatusCodes.FORBIDDEN)
+              .send()
+          )
+          .catch(() => res.status(StatusCodes.INTERNAL_SERVER_ERROR).send());
+      } catch (e) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+      }
+    });
 
     /**
      * @swagger
