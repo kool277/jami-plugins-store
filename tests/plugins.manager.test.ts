@@ -57,7 +57,8 @@ describe('Plugins manager service tests', function () {
                 arches: ['test'],
                 timestamp: '',
                 author: '',
-                background: ''
+                background: '',
+                signature: Buffer.from(''),
             }];
 
         const expectedPlugin = [
@@ -89,6 +90,7 @@ describe('Plugins manager service tests', function () {
             background: 'test',
             timestamp: 'test',
             author: 'test',
+            signature: Buffer.from(''),
         }
 
         const expected = [{
@@ -99,8 +101,16 @@ describe('Plugins manager service tests', function () {
         pluginsManagerService['plugins'] = expected;
         transaltionStub.formatText.resolves(plugin.name);
         const actual = await pluginsManagerService.getPlugin("test", 'en');
-
-        expect(actual).toEqual(plugin);
+        expect(actual).toEqual({
+            id: plugin.id,
+            name: plugin.name,
+            version: plugin.version,
+            description: plugin.description,
+            icon: plugin.icon,
+            background: plugin.background,
+            timestamp: plugin.timestamp,
+            author: plugin.author,
+        });
     });
 
     it('should return undefined if plugin not found', async () => {
@@ -118,6 +128,7 @@ describe('Plugins manager service tests', function () {
             background: 'test',
             timestamp: 'test',
             author: 'test',
+            signature: Buffer.from(''),
         };
 
         const expected = [{
@@ -214,6 +225,7 @@ describe('Plugins manager service tests', function () {
             background: 'test',
             timestamp: 'test',
             author: 'test',
+            signature: Buffer.from(''),
         };
 
         const expected = [{
@@ -270,6 +282,7 @@ describe('Plugins manager service tests', function () {
                 arches: ['x64'],
                 timestamp: 'timestamp1',
                 author: 'author1',
+                signature: Buffer.from(''),
             },
             {
                 id: 'plugin2',
@@ -281,6 +294,7 @@ describe('Plugins manager service tests', function () {
                 arches: ['x86', 'x64'],
                 timestamp: 'timestamp2',
                 author: 'author2',
+                signature: Buffer.from(''),
             },
             {
                 id: 'plugin3',
@@ -292,6 +306,7 @@ describe('Plugins manager service tests', function () {
                 arches: ['x64'],
                 timestamp: 'timestamp3',
                 author: 'author3',
+                signature: Buffer.from(''),
             },
         ];
 
@@ -335,6 +350,28 @@ describe('Plugins manager service tests', function () {
         // Restore the original getNewPlugin method
         getNewPluginStub.restore();
     });
+    it('should return true if plugin is not already installed and signature is valid', async () => {
+        const pluginPath = 'path/to/plugin';
+        const signature = Buffer.from('valid-signature');
 
+        architectureService.getAllPluginArches.resolves(['arch1', 'arch2']);
+        fileManager.readArchive.resolves(signature);
+        pluginsManagerService['plugins'] = [];
 
+        const result = await pluginsManagerService['checkPluginAlreadyPull'](pluginPath);
+
+        expect(result).toBe(true);
+      });
+
+      it('should return true if plugin is not already installed and signature is invalid', async () => {
+        const pluginPath = 'path/to/plugin';
+        const signature = Buffer.from('invalid-signature');
+        architectureService.getAllPluginArches.resolves(['arch1', 'arch2']);
+        fileManager.readArchive.resolves(signature);
+        pluginsManagerService['plugins'] = [];
+
+        const result = await pluginsManagerService['checkPluginAlreadyPull'](pluginPath);
+
+        expect(result).toBe(true);
+      });
 });

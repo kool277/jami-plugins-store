@@ -44,9 +44,22 @@ export class PluginsManager {
       return;
     }
     // eslint-disable-next-line
-    watcher.on('change', () => {
-      this.setPlugins().catch(e => {
-        console.log(e);
+    watcher.on('change', (_, filename: string | Buffer) => {
+      const filePath =
+        // eslint-disable-next-line
+        __dirname +
+        '/../..' +
+        process.env.DATA_DIRECTORY +
+        '/' +
+        filename.toString();
+      // check if the file signature is valid and not in the list
+      this.checkPluginAlreadyPull(filePath).then(isValid => {
+        if (!isValid) {
+          return;
+        }
+        this.setPlugins().catch(e => {
+          console.log(e);
+        });
       });
     });
   }
@@ -55,7 +68,7 @@ export class PluginsManager {
   async getPlugins(
     arch: string,
     lang: string
-  ): Promise<Array<Omit<Plugins, 'arches'>>> {
+  ): Promise<Array<Omit<Omit<Plugins, 'arches'>, 'signature'>>> {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
@@ -206,6 +219,7 @@ export class PluginsManager {
         timestamp,
         author: issuer.CN,
         background: plugin.background,
+        signature: await this.fileManager.readArchive(path, 'signatures.sig'),
       };
     } catch (e) {
       console.error(e);
@@ -295,5 +309,27 @@ export class PluginsManager {
       }
     }
     this.plugins = plugins;
+  }
+
+  private async checkPluginAlreadyPull(pluginPath: string): Promise<boolean> {
+    const id = pluginPath.split('/').at(-1)?.split('.').at(0);
+    const arches = await this.architectureManager.getAllPluginArches(
+      pluginPath
+    );
+    if (id === undefined || arches === undefined) {
+      return false;
+    }
+    const pluginAlreadyInstalled = await this.findPlugin(id, arches[0]);
+    if (pluginAlreadyInstalled === undefined) {
+      return true;
+    }
+    const signature = await this.fileManager.readArchive(
+      pluginPath,
+      'signatures.sig'
+    );
+    return !this.certificateManager.verifySignature(
+      pluginAlreadyInstalled.signature,
+      signature
+    );
   }
 }

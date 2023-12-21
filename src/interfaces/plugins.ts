@@ -25,4 +25,5 @@ export interface Plugins {
   arches: string[];
   timestamp: string;
   author: string;
+  signature: Buffer;
 }

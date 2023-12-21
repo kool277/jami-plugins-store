@@ -62,6 +62,10 @@ export class CertificateManager {
     return await this.readCRL(process.env.DATA_DIRECTORY + '/' + 'sfl.crl');
   }
 
+  verifySignature(signature: Buffer, checkSignature: Buffer): boolean {
+    return Buffer.compare(signature, checkSignature) === 0;
+  }
+
   private async readCertificate(
     path: string,
     file: string
