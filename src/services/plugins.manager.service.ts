@@ -74,7 +74,7 @@ export class PluginsManager {
     }
     return await Promise.all(
       this.plugins
-        .filter(plugin => this.isPluginAvailable(plugin.id, arch))
+        .filter(plugin => plugin.arches.includes(arch))
         .map(async (plugin: Plugins) => {
           return {
             id: plugin.id,
@@ -327,9 +327,6 @@ export class PluginsManager {
       pluginPath,
       'signatures.sig'
     );
-    return !this.certificateManager.verifySignature(
-      pluginAlreadyInstalled.signature,
-      signature
-    );
+    return !(Buffer.compare(signature, pluginAlreadyInstalled.signature) === 0);
   }
 }

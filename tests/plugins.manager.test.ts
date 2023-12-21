@@ -374,4 +374,30 @@ describe('Plugins manager service tests', function () {
 
         expect(result).toBe(true);
       });
+
+        it('should return false if plugin is already installed and signature is valid', async () => {
+            const pluginPath = 'path/to/plugin';
+            const signature = Buffer.from('valid-signature');
+            const plugin = {
+            id: 'test',
+            name: 'test',
+            version: '1.0.0',
+            description: 'test',
+            icon: 'test',
+            background: 'test',
+            timestamp: 'test',
+            signature: signature,
+            author: 'test',
+            };
+            const expected = [{
+            ...plugin,
+            arches: ["test"],
+            }];
+            architectureService.getAllPluginArches.resolves(['test']);
+            fileManager.readArchive.resolves(signature);
+            pluginsManagerService['plugins'] = expected;
+            Sinon.stub(pluginsManagerService, 'findPlugin').resolves({...plugin, arches: ['test']});
+            const result = await pluginsManagerService['checkPluginAlreadyPull'](pluginPath);
+            expect(result).toBe(false);
+        });
 });
