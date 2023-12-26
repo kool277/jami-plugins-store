@@ -70,21 +70,21 @@ describe('Certificate manager service tests', function () {
         const expectedCRL = 'test';
         fileManager.readFile.resolves(Buffer.from(expectedCRL, 'utf-8'));
         const crl = await certificateManager['readCRL'](path + '/' + file);
-        expect(crl).toEqual(expectedCRL);
+        expect(crl).toEqual(Buffer.from(expectedCRL, 'utf-8'));
     });
 
     it('should return sfl crl', async () => {
         const expectedCRL = 'test';
         fileManager.readFile.resolves(Buffer.from(expectedCRL, 'utf-8'));
         const crl = await certificateManager.getSflCrl();
-        expect(crl).toEqual(expectedCRL);
+        expect(crl).toEqual(Buffer.from(expectedCRL, 'utf-8'));
     });
 
     it('should return ca crl', async () => {
         const expectedCRL = 'test';
         fileManager.readFile.resolves(Buffer.from(expectedCRL, 'utf-8'));
         const crl = await certificateManager.getCaCrl();
-        expect(crl).toEqual(expectedCRL);
+        expect(crl).toEqual(Buffer.from(expectedCRL, 'utf-8'));
     });
     it('should parse the DN correctly', () => {
         const dn = 'CN=John Doe\nO=Acme Corp';

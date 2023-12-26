@@ -29,37 +29,48 @@ export class CertificateManager {
   }
 
   async getCaCrlPath(): Promise<string> {
-    const crlFilePath =
-      (process.env.DATA_DIRECTORY as string) + '/' + 'root.crl';
-    const isCRLFileExist = await this.fileManager.isFileExist(crlFilePath);
-    if (process.env.DATA_DIRECTORY === undefined || !isCRLFileExist) {
-      return '';
-    }
-    return crlFilePath;
+    return await this.getCrlPath(
+      // eslint-disable-next-line
+      __dirname + '/../..' + (process.env.DATA_DIRECTORY as string),
+      'root.crl'
+    );
   }
 
   async getSflCrlPath(): Promise<string> {
-    const crlFilePath =
-      (process.env.DATA_DIRECTORY as string) + '/' + 'SFL.crl';
-    const isCRLFileExist = await this.fileManager.isFileExist(crlFilePath);
-    if (process.env.DATA_DIRECTORY === undefined || !isCRLFileExist) {
-      return '';
-    }
-    return crlFilePath;
+    return await this.getCrlPath(
+      // eslint-disable-next-line
+      __dirname + '/../..' + (process.env.DATA_DIRECTORY as string),
+      'SFL.crl'
+    );
   }
 
-  async getCaCrl(): Promise<string> {
-    if (process.env.DATA_DIRECTORY === undefined) {
+  async getCrlPath(path: string, file: string): Promise<string> {
+    const crlPath = path + '/' + file;
+    const isCrlFileExist = await this.fileManager.isFileExist(crlPath);
+    if (process.env.DATA_DIRECTORY === undefined || !isCrlFileExist) {
       return '';
     }
-    return await this.readCRL(process.env.DATA_DIRECTORY + '/' + 'ca.crl');
+    return crlPath;
   }
 
-  async getSflCrl(): Promise<string> {
+  async getCaCrl(): Promise<Buffer> {
     if (process.env.DATA_DIRECTORY === undefined) {
-      return '';
+      return Buffer.from('');
     }
-    return await this.readCRL(process.env.DATA_DIRECTORY + '/' + 'sfl.crl');
+    return await this.readCRL(
+      // eslint-disable-next-line
+      __dirname + '/../..' + process.env.DATA_DIRECTORY + '/' + 'root.crl'
+    );
+  }
+
+  async getSflCrl(): Promise<Buffer> {
+    if (process.env.DATA_DIRECTORY === undefined) {
+      return Buffer.from('');
+    }
+    return await this.readCRL(
+      // eslint-disable-next-line
+      __dirname + '/../..' + process.env.DATA_DIRECTORY + '/' + 'sfl.crl'
+    );
   }
 
   verifySignature(signature: Buffer, checkSignature: Buffer): boolean {
@@ -74,8 +85,8 @@ export class CertificateManager {
       });
   }
 
-  private async readCRL(file: string): Promise<string> {
-    return (await this.fileManager.readFile(file)).toString();
+  private async readCRL(file: string): Promise<Buffer> {
+    return await this.fileManager.readFile(file);
   }
 
   parseDN(dn: string): Record<string, string> {
