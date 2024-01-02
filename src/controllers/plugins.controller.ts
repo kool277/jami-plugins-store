@@ -303,8 +303,12 @@ export class PluginsController {
               .status(isUploadable ? StatusCodes.OK : StatusCodes.FORBIDDEN)
               .send()
           )
-          .catch(() => res.status(StatusCodes.INTERNAL_SERVER_ERROR).send());
+          .catch(e => {
+            console.log(e);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+          });
       } catch (e) {
+        console.log(e);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
       }
     });
@@ -407,16 +411,19 @@ export class PluginsController {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.router.get('/versions/:id', async (req: Request, res: Response) => {
       try {
-        if (req.query.arch === undefined) {
+        if (req.query.arch === undefined || req.params.id === undefined) {
           res.status(StatusCodes.BAD_REQUEST).send();
           return;
         }
-        const versions = await this.pluginsManager.getVersions();
+        const version = await this.pluginsManager.getVersion(
+          req.params.id,
+          req.query.arch as string
+        );
         res
           .status(
-            versions.length === 0 ? StatusCodes.NOT_FOUND : StatusCodes.OK
+            version === undefined ? StatusCodes.NOT_FOUND : StatusCodes.OK
           )
-          .send(versions === undefined ? undefined : versions);
+          .send(version === undefined ? undefined : [{version}]);
         return;
       } catch (e) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();

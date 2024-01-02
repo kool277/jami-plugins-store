@@ -275,21 +275,28 @@ export class PluginsManager {
     );
   }
 
-  async getVersions(): Promise<Array<{id: string; version: string}>> {
+  async getVersion(id: string, arch: string): Promise<string | undefined> {
+    const plugin = await this.findPlugin(id, arch);
+    return plugin === undefined ? undefined : plugin.version;
+  }
+
+  async getVersions(
+    arch: string
+  ): Promise<Array<{id: string; version: string}>> {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
-    const versions: Array<{id: string; version: string}> = [];
-    for (const plugin of this.plugins) {
-      const version = plugin.version;
-      if (version !== undefined) {
-        versions.push({
+    return this.plugins
+      .filter(
+        (plugins: Plugins) =>
+          plugins.arches.includes(arch) && plugins.version !== undefined
+      )
+      .map((plugin: Plugins) => {
+        return {
           id: plugin.id,
-          version,
-        });
-      }
-    }
-    return versions;
+          version: plugin.version,
+        };
+      });
   }
 
   private async setPlugins(): Promise<void> {

@@ -318,7 +318,7 @@ describe('Plugins manager service tests', function () {
             { id: 'plugin3', version: '3.0.0' },
         ];
 
-        const actualVersions = await pluginsManagerService.getVersions();
+        const actualVersions = await pluginsManagerService.getVersions('x64');
 
         expect(actualVersions).toEqual(expectedVersions);
     });
