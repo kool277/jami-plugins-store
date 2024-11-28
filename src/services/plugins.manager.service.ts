@@ -73,25 +73,30 @@ export class PluginsManager {
     if (this.plugins.length === 0) {
       await this.setPlugins();
     }
-    return await Promise.all(
+
+    const response = await Promise.all(
       this.plugins
         .filter(plugin => plugin.arches.includes(arch))
         .map(async (plugin: Plugins) => {
           return {
             id: plugin.id,
-            name: await this.translation.formatText(
-              plugin.id,
-              lang,
-              plugin.name,
-              await this.getPluginPath(plugin.id, arch)
-            ),
+            name: plugin.name.includes('{{')
+              ? await this.translation.formatText(
+                  plugin.id,
+                  lang,
+                  plugin.name,
+                  await this.getPluginPath(plugin.id, arch)
+                )
+              : plugin.name,
             version: plugin.version,
-            description: await this.translation.formatText(
-              plugin.id,
-              lang,
-              plugin.description,
-              await this.getPluginPath(plugin.id, arch)
-            ),
+            description: plugin.description.includes('{{')
+              ? await this.translation.formatText(
+                  plugin.id,
+                  lang,
+                  plugin.description,
+                  await this.getPluginPath(plugin.id, arch)
+                )
+              : plugin.description,
             icon: plugin.icon,
             background: plugin.background,
             timestamp: plugin.timestamp,
@@ -99,6 +104,7 @@ export class PluginsManager {
           };
         })
     );
+    return response;
   }
 
   async getPlugin(
