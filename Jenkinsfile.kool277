@@ -1,0 +1,119 @@
+// kool277 pipeline for kool277/jami-plugins-store (multibranch job from
+// ci/jenkins/setup.sh in kool277/jami). The build script lives in the
+// workspace repository kool277/jami: each build fetches it (outside the
+// checkout, into $WORKSPACE_TMP/kool277) for a v* release tag at the
+// platform release named in the tag message, else main.
+//
+// Every build: ci/plugins-store/build.sh (lint, jest tests, production
+// image, smoke test, tarball). On a v* tag: publish the GitHub release and
+// push ghcr.io/kool277/jami-plugins-store:<tag> and :latest (see
+// RELEASING.md in kool277/jami). Needs the credentials github-kool277
+// (GitHub release) and ghcr-kool277 (kool277 + a token with
+// write:packages), docker and curl on the agent.
+
+// The kool277/jami ref to build with: for a v* release tag, the platform
+// release that made it, from the "Platform:" line of the tag message (see
+// ci/release/platform-release.sh in kool277/jami); else main. Call it after
+// the checkout.
+def ciRef() {
+    if (!env.TAG_NAME?.startsWith('v')) {
+        return 'main'
+    }
+    def platform = sh(returnStdout: true,
+                      script: 'git for-each-ref --format="%(contents)" "refs/tags/$TAG_NAME" | sed -n "s/^Platform: //p"').trim()
+    if (!platform) {
+        error("The message of tag ${env.TAG_NAME} names no platform release (no Platform: line)")
+    }
+    return platform
+}
+
+// Run a network step up to 10 times, 30 s apart: this agent's connection
+// drops for minutes at a time.
+def withNetRetry(Closure body) {
+    def attempt = 0
+    retry(10) {
+        if (attempt++ > 0) {
+            sleep(time: 30, unit: 'SECONDS')
+        }
+        body()
+    }
+}
+
+pipeline {
+    agent any
+    options {
+        timestamps()
+        ansiColor('xterm')
+        timeout(time: 1, unit: 'HOURS')
+        disableConcurrentBuilds()
+        // Checked out in the first stage, with withNetRetry.
+        skipDefaultCheckout()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+    environment {
+        KOOL277 = "${env.WORKSPACE_TMP}/kool277"
+        CI = "${env.WORKSPACE_TMP}/kool277/ci"
+        PLUGINS_STORE_DIR = "${env.WORKSPACE}"
+        // The image tag and asset names: the release tag, else the build.
+        VERSION = "${env.TAG_NAME ?: "ci-${env.BUILD_NUMBER}"}"
+    }
+    stages {
+        stage('Sources') {
+            steps {
+                withNetRetry {
+                    checkout scm
+                }
+                script {
+                    env.CI_REF = ciRef()
+                }
+                withNetRetry {
+                    sh 'rm -rf "$KOOL277" && git clone -q --depth 1 --branch "$CI_REF" https://github.com/kool277/jami.git "$KOOL277"'
+                }
+            }
+        }
+        stage('Build and test') {
+            steps {
+                retry(2) {
+                    sh '"$CI/plugins-store/build.sh"'
+                }
+                archiveArtifacts artifacts: 'out/dist/*', fingerprint: true
+            }
+        }
+        stage('Release') {
+            when { tag 'v*' }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-kool277',
+                                                  usernameVariable: 'GH_USER',
+                                                  passwordVariable: 'GH_TOKEN')]) {
+                    withNetRetry {
+                        sh 'PLATFORM="$CI_REF" "$CI/release/publish-release.sh" jami-plugins-store "$TAG_NAME" out/dist/*'
+                    }
+                }
+                // A GitHub App token (github-kool277) cannot create GHCR
+                // packages; ghcr-kool277 holds a personal access token.
+                withCredentials([usernamePassword(credentialsId: 'ghcr-kool277',
+                                                  usernameVariable: 'GH_USER',
+                                                  passwordVariable: 'GH_TOKEN')]) {
+                    withNetRetry {
+                        sh '"$CI/release/push-image.sh" "jami-plugins-store:$TAG_NAME" jami-plugins-store "$TAG_NAME"'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        // Images of branch builds are not kept; release images are pushed.
+        always {
+            sh 'docker rmi "jami-plugins-store:$VERSION" "jami-plugins-store-lint:$VERSION" "jami-plugins-store-test:$VERSION" >/dev/null 2>&1 || true'
+        }
+        // A v* tag is built once, for a release: free its workspace when
+        // the build ends. Branch and pull request builds keep theirs.
+        cleanup {
+            script {
+                if (env.TAG_NAME?.startsWith('v')) {
+                    cleanWs(notFailBuild: true)
+                }
+            }
+        }
+    }
+}
